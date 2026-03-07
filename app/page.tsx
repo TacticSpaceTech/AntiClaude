@@ -5,7 +5,7 @@ import { I18nProvider, useI18n } from '@/lib/i18n'
 import { HeroSection } from '@/components/hero-section'
 import { MatrixRain } from '@/components/matrix-rain'
 import { AttackForm, type AttackConfig } from '@/components/attack-form'
-import { AttackTerminal } from '@/components/attack-terminal'
+import { AttackTerminal, type TerminalLine } from '@/components/attack-terminal'
 import { SecurityReport, type AttackResult } from '@/components/security-report'
 import { EmailCaptureModal } from '@/components/email-capture-modal'
 import { FeaturesSection } from '@/components/features-section'
@@ -17,13 +17,6 @@ import { CTASection } from '@/components/cta-section'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { calculateSecurityScore } from '@/lib/payloads'
 import { RotateCcw, Github, Menu, X } from 'lucide-react'
-
-interface TerminalLine {
-  id: number
-  text: string
-  type: 'info' | 'attack' | 'success' | 'error' | 'warning' | 'system'
-  timestamp?: string
-}
 
 type AppPhase = 'input' | 'attacking' | 'report'
 
@@ -42,7 +35,11 @@ function HomeContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const testSectionRef = useRef<HTMLDivElement>(null)
 
-  const addLine = useCallback((text: string, type: TerminalLine['type']) => {
+  const addLine = useCallback((
+    text: string, 
+    type: TerminalLine['type'],
+    extra?: { details?: string; confidence?: number; indicators?: string[] }
+  ) => {
     const timestamp = new Date().toLocaleTimeString('en-US', { 
       hour12: false, 
       hour: '2-digit', 
@@ -50,7 +47,13 @@ function HomeContent() {
       second: '2-digit' 
     })
     setLineId(prev => {
-      setTerminalLines(lines => [...lines, { id: prev, text, type, timestamp }])
+      setTerminalLines(lines => [...lines, { 
+        id: prev, 
+        text, 
+        type, 
+        timestamp,
+        ...extra
+      }])
       return prev + 1
     })
   }, [])
@@ -74,7 +77,7 @@ function HomeContent() {
         body: JSON.stringify({
           endpoint: config.endpoint,
           authHeader: config.authHeader,
-          payloadCount: 5
+          payloadCount: 6
         })
       })
 
@@ -101,7 +104,11 @@ function HomeContent() {
           }
 
           if (data.type === 'attack_start') {
-            addLine(`${t('terminal.testing')}: ${data.payload.name}`, 'attack')
+            addLine(
+              `${t('terminal.testing')}: ${data.payload.name} [${data.payload.severity.toUpperCase()}]`, 
+              'attack',
+              { details: data.payload.prompt }
+            )
           }
 
           if (data.type === 'attack_result') {
@@ -109,9 +116,22 @@ function HomeContent() {
             attackResults.push(result)
             
             if (result.leaked) {
-              addLine(t('terminal.vulnerability', { confidence: result.confidence }), 'success')
+              addLine(
+                t('terminal.vulnerability', { confidence: result.confidence }), 
+                'success',
+                { 
+                  confidence: result.confidence, 
+                  indicators: result.indicators,
+                  details: result.response?.slice(0, 150)
+                }
+              )
             } else {
               addLine(t('terminal.passed'), 'error')
+            }
+            
+            // Show if API call was simulated
+            if (result.isSimulated && result.error) {
+              addLine(`API Error: ${result.error} (using simulated response)`, 'warning')
             }
           }
 
