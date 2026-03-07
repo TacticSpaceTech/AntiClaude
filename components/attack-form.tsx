@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Shield, Zap, AlertTriangle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Info, Play } from 'lucide-react'
 
 interface AttackFormProps {
   onStartAttack: (config: AttackConfig) => void
@@ -43,39 +43,40 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Main Input */}
       <div className="space-y-2">
-        <Label htmlFor="endpoint" className="text-foreground flex items-center gap-2">
-          <Zap className="w-4 h-4 text-terminal-amber" />
-          Target API Endpoint
+        <Label htmlFor="endpoint" className="text-sm font-medium text-foreground">
+          API Endpoint
         </Label>
         <Input
           id="endpoint"
           type="url"
-          placeholder="https://api.your-ai-app.com/chat"
+          placeholder="https://api.your-app.com/chat"
           value={endpoint}
           onChange={(e) => setEndpoint(e.target.value)}
-          className="bg-input border-border text-foreground placeholder:text-muted-foreground font-mono"
+          className="h-12 bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
           disabled={isRunning}
         />
         <p className="text-xs text-muted-foreground">
-          Enter the API endpoint of your AI application that accepts user messages
+          Enter your AI chat API endpoint that accepts user messages
         </p>
       </div>
 
+      {/* Advanced Toggle */}
       <button
         type="button"
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        {showAdvanced ? '- Hide' : '+ Show'} Advanced Options
+        {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        Advanced Options
       </button>
 
       {showAdvanced && (
-        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-          <Label htmlFor="auth" className="text-foreground flex items-center gap-2">
-            <Shield className="w-4 h-4 text-cyber-blue" />
-            Authorization Header (Optional)
+        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <Label htmlFor="auth" className="text-sm font-medium text-foreground">
+            Authorization Header
           </Label>
           <Input
             id="auth"
@@ -83,37 +84,39 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
             placeholder="Bearer sk-xxx..."
             value={authHeader}
             onChange={(e) => setAuthHeader(e.target.value)}
-            className="bg-input border-border text-foreground placeholder:text-muted-foreground font-mono"
+            className="h-12 bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
             disabled={isRunning}
           />
           <p className="text-xs text-muted-foreground">
-            If your API requires authentication, provide the header value
+            Optional: Add if your API requires authentication
           </p>
         </div>
       )}
 
-      <div className="flex items-start gap-2 p-3 bg-secondary/50 border border-border rounded-lg">
-        <AlertTriangle className="w-4 h-4 text-terminal-amber shrink-0 mt-0.5" />
-        <p className="text-xs text-muted-foreground">
-          Only test APIs that you own or have explicit permission to test. 
-          AntiClaude sends safe, non-destructive payloads designed to detect prompt vulnerabilities.
+      {/* Notice */}
+      <div className="flex items-start gap-3 p-3 bg-secondary/50 border border-border rounded-lg">
+        <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Only test APIs you own or have permission to test. AntiClaude sends safe, non-destructive payloads.
         </p>
       </div>
 
+      {/* Submit Button */}
       <Button
         type="submit"
         disabled={isRunning || !endpoint || !isValidUrl(endpoint)}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg"
+        className="w-full h-12 bg-foreground hover:bg-foreground/90 text-background font-medium text-sm"
       >
         {isRunning ? (
-          <>
-            <span className="animate-pulse">Attacking...</span>
-          </>
+          <span className="flex items-center gap-2">
+            <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+            Running Attack...
+          </span>
         ) : (
-          <>
-            <Zap className="w-5 h-5 mr-2" />
-            Start Attack
-          </>
+          <span className="flex items-center gap-2">
+            <Play className="w-4 h-4" />
+            Start Security Scan
+          </span>
         )}
       </Button>
     </form>

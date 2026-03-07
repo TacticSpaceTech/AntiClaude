@@ -7,7 +7,7 @@ import { AttackTerminal } from '@/components/attack-terminal'
 import { SecurityReport, type AttackResult } from '@/components/security-report'
 import { EmailCaptureModal } from '@/components/email-capture-modal'
 import { calculateSecurityScore } from '@/lib/payloads'
-import { Github, Twitter, ArrowRight, Shield } from 'lucide-react'
+import { RotateCcw } from 'lucide-react'
 
 interface TerminalLine {
   id: number
@@ -22,8 +22,8 @@ export default function Home() {
   const [phase, setPhase] = useState<AppPhase>('input')
   const [isRunning, setIsRunning] = useState(false)
   const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([
-    { id: 0, text: 'AntiClaude Attack Engine v1.0.0', type: 'system' },
-    { id: 1, text: 'Ready. Waiting for target...', type: 'info' }
+    { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
+    { id: 1, text: 'Ready for target...', type: 'info' }
   ])
   const [results, setResults] = useState<AttackResult[]>([])
   const [isReportLocked, setIsReportLocked] = useState(true)
@@ -48,13 +48,12 @@ export default function Home() {
     setIsRunning(true)
     setResults([])
     setTerminalLines([
-      { id: 0, text: 'AntiClaude Attack Engine v1.0.0', type: 'system' },
+      { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
     ])
     setLineId(1)
 
-    addLine(`Target acquired: ${config.endpoint}`, 'info')
-    addLine('Initializing attack sequence...', 'system')
-    addLine('Loading payloads from armory...', 'info')
+    addLine(`Target: ${config.endpoint}`, 'info')
+    addLine('Initializing scan...', 'system')
 
     try {
       const response = await fetch('/api/attack/stream', {
@@ -86,12 +85,11 @@ export default function Home() {
           const data = JSON.parse(line.replace('data: ', ''))
 
           if (data.type === 'init') {
-            addLine(`Loaded ${data.totalPayloads} attack payloads`, 'info')
-            addLine('Commencing attack...', 'warning')
+            addLine(`Loaded ${data.totalPayloads} test payloads`, 'info')
           }
 
           if (data.type === 'attack_start') {
-            addLine(`Testing: ${data.payload.name} [${data.payload.categoryLabel}]`, 'attack')
+            addLine(`Testing: ${data.payload.name}`, 'attack')
           }
 
           if (data.type === 'attack_result') {
@@ -99,29 +97,28 @@ export default function Home() {
             attackResults.push(result)
             
             if (result.leaked) {
-              addLine(`VULNERABILITY FOUND! Confidence: ${result.confidence}%`, 'success')
+              addLine(`Vulnerability found (${result.confidence}% confidence)`, 'success')
             } else {
-              addLine(`Attack blocked - Target defended`, 'error')
+              addLine(`Test passed - no vulnerability`, 'error')
             }
           }
 
           if (data.type === 'complete') {
             const breached = attackResults.filter(r => r.leaked).length
-            addLine('Attack sequence complete', 'system')
-            addLine(`Results: ${breached}/${attackResults.length} vulnerabilities exploited`, 
+            addLine('Scan complete', 'system')
+            addLine(`Results: ${breached}/${attackResults.length} vulnerabilities found`, 
               breached > 0 ? 'warning' : 'info'
             )
             
             setResults(attackResults)
             setIsRunning(false)
             
-            // 延迟显示报告
             setTimeout(() => {
               setPhase('report')
               if (breached > 0) {
-                setTimeout(() => setShowEmailModal(true), 1000)
+                setTimeout(() => setShowEmailModal(true), 800)
               }
-            }, 1500)
+            }, 1000)
           }
         }
       }
@@ -146,8 +143,8 @@ export default function Home() {
     setResults([])
     setIsReportLocked(true)
     setTerminalLines([
-      { id: 0, text: 'AntiClaude Attack Engine v1.0.0', type: 'system' },
-      { id: 1, text: 'Ready. Waiting for target...', type: 'info' }
+      { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
+      { id: 1, text: 'Ready for target...', type: 'info' }
     ])
     setLineId(2)
   }
@@ -157,57 +154,44 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Grid Background */}
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none" />
-      
-      <main className="relative z-10">
+      <main className="relative">
         {/* Header */}
-        <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-20">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20">
+          <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Shield className="w-6 h-6 text-primary" />
-              <span className="font-bold text-foreground">AntiClaude</span>
+              <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
+                <span className="text-background font-bold text-sm">A</span>
+              </div>
+              <span className="font-semibold text-foreground">AntiClaude</span>
             </div>
-            <div className="flex items-center gap-4">
-              <a 
-                href="https://github.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-            </div>
+            <a 
+              href="https://github.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
           </div>
         </header>
 
         {/* Main Content */}
-        <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="max-w-2xl mx-auto px-6 py-16">
           {phase === 'input' && (
             <>
               <HeroSection />
-              <div className="max-w-xl mx-auto">
-                <AttackForm onStartAttack={handleStartAttack} isRunning={isRunning} />
-              </div>
+              <AttackForm onStartAttack={handleStartAttack} isRunning={isRunning} />
             </>
           )}
 
           {phase === 'attacking' && (
-            <div className="max-w-4xl mx-auto">
+            <div>
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Attack in Progress
+                <h2 className="text-xl font-semibold text-foreground mb-2">
+                  Scanning in Progress
                 </h2>
-                <p className="text-muted-foreground">
-                  Testing your AI for prompt injection vulnerabilities...
+                <p className="text-sm text-muted-foreground">
+                  Testing for prompt injection vulnerabilities...
                 </p>
               </div>
               <AttackTerminal 
@@ -218,21 +202,22 @@ export default function Home() {
           )}
 
           {phase === 'report' && (
-            <div className="max-w-2xl mx-auto">
+            <div>
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground">
+                  <h2 className="text-xl font-semibold text-foreground">
                     Security Report
                   </h2>
-                  <p className="text-muted-foreground">
-                    Analysis complete. Review your results below.
+                  <p className="text-sm text-muted-foreground">
+                    Scan complete. Review your results.
                   </p>
                 </div>
                 <button 
                   onClick={handleNewTest}
-                  className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Run New Test <ArrowRight className="w-4 h-4" />
+                  <RotateCcw className="w-4 h-4" />
+                  New Scan
                 </button>
               </div>
               <SecurityReport 
@@ -247,18 +232,13 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="border-t border-border mt-20">
-          <div className="max-w-7xl mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-primary" />
-                <span className="text-sm text-muted-foreground">
-                  AntiClaude - LLM Security Testing Platform
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Built for AI developers who care about security.
-              </p>
-            </div>
+          <div className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              AntiClaude - LLM Security Testing
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Built for developers
+            </p>
           </div>
         </footer>
       </main>
