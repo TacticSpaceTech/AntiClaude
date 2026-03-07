@@ -6,6 +6,7 @@ import { HeroSection } from '@/components/hero-section'
 import { MatrixRain } from '@/components/matrix-rain'
 import { AttackForm, type AttackConfig } from '@/components/attack-form'
 import { AttackTerminal, type TerminalLine } from '@/components/attack-terminal'
+import { AIBattleTerminal, type BattleLine } from '@/components/ai-battle-terminal'
 import { SecurityReport, type AttackResult } from '@/components/security-report'
 import { EmailCaptureModal } from '@/components/email-capture-modal'
 import { FeaturesSection } from '@/components/features-section'
@@ -33,7 +34,35 @@ function HomeContent() {
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [lineId, setLineId] = useState(2)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [battleLines, setBattleLines] = useState<BattleLine[]>([])
+  const [battleLineId, setBattleLineId] = useState(0)
+  const [currentStrategy, setCurrentStrategy] = useState<string>('direct')
+  const [defenderStatus, setDefenderStatus] = useState<'analyzing' | 'blocking' | 'vulnerable' | 'idle'>('idle')
+  const [targetEndpoint, setTargetEndpoint] = useState('')
   const testSectionRef = useRef<HTMLDivElement>(null)
+
+  const addBattleLine = useCallback((
+    source: BattleLine['source'],
+    text: string,
+    extra?: { thinking?: string; confidence?: number; isStreaming?: boolean }
+  ) => {
+    const timestamp = new Date().toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    })
+    setBattleLineId(prev => {
+      setBattleLines(lines => [...lines, { 
+        id: prev, 
+        source,
+        text, 
+        timestamp,
+        ...extra
+      }])
+      return prev + 1
+    })
+  }, [])
 
   const addLine = useCallback((
     text: string, 
@@ -62,13 +91,21 @@ function HomeContent() {
     setPhase('attacking')
     setIsRunning(true)
     setResults([])
+    setTargetEndpoint(config.endpoint)
     setTerminalLines([
       { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
     ])
+    setBattleLines([])
+    setBattleLineId(0)
+    setDefenderStatus('idle')
     setLineId(1)
 
     addLine(`${t('terminal.target')}: ${config.endpoint}`, 'info')
     addLine(t('terminal.initializing'), 'system')
+    
+    // AI Battle initialization
+    addBattleLine('system', locale === 'zh' ? '初始化 AI 对抗系统...' : 'Initializing AI Battle System...', { thinking: locale === 'zh' ? '加载攻击模块' : 'Loading attack modules' })
+    addBattleLine('attacker', locale === 'zh' ? '目标锁定: ' + config.endpoint : 'Target acquired: ' + config.endpoint, { thinking: locale === 'zh' ? '分析目标架构...' : 'Analyzing target architecture...' })
 
     try {
       const response = await fetch('/api/attack/stream', {
@@ -109,6 +146,16 @@ function HomeContent() {
               'attack',
               { details: data.payload.prompt }
             )
+            
+            // AI Battle: Attacker move
+            setDefenderStatus('analyzing')
+            const strategy = data.payload.category === 'jailbreak' ? 'roleplay' : 
+                           data.payload.category === 'translation_bypass' ? 'encoding' : 'direct'
+            setCurrentStrategy(strategy)
+            addBattleLine('attacker', `[${data.payload.severity.toUpperCase()}] ${data.payload.name}`, { 
+              thinking: locale === 'zh' ? '选择攻击策略: ' + strategy : 'Selecting strategy: ' + strategy,
+              isStreaming: true 
+            })
           }
 
           if (data.type === 'attack_result') {
@@ -125,9 +172,22 @@ function HomeContent() {
                   details: result.response?.slice(0, 150)
                 }
               )
+              
+              // AI Battle: Successful breach
+              setDefenderStatus('vulnerable')
+              addBattleLine('defender', locale === 'zh' ? '防线被突破!' : 'Defense breached!', { confidence: 100 - result.confidence })
+              addBattleLine('result', `[LEAK] ${locale === 'zh' ? '置信度' : 'Confidence'}: ${result.confidence}%`, { confidence: result.confidence })
             } else {
               addLine(t('terminal.passed'), 'error')
+              
+              // AI Battle: Blocked
+              setDefenderStatus('blocking')
+              addBattleLine('defender', locale === 'zh' ? '攻击已拦截' : 'Attack blocked', { confidence: 100 })
+              addBattleLine('result', `[SAFE] ${locale === 'zh' ? '防护有效' : 'Defense held'}`)
             }
+            
+            // Reset defender status after a short delay
+            setTimeout(() => setDefenderStatus('idle'), 500)
             
             // Show if API call was simulated
             if (result.isSimulated && result.error) {
@@ -293,8 +353,8 @@ function HomeContent() {
             )}
 
             {phase === 'attacking' && (
-              <div>
-                <div className="text-center mb-8">
+              <div className="space-y-6">
+                <div className="text-center mb-4">
                   <h2 className="text-xl font-semibold text-foreground mb-2">
                     {t('scanning.title')}
                   </h2>
@@ -302,10 +362,31 @@ function HomeContent() {
                     {t('scanning.subtitle')}
                   </p>
                 </div>
-                <AttackTerminal 
-                  lines={terminalLines} 
-                  isRunning={isRunning} 
+                
+                {/* AI Battle Terminal - Featured */}
+                <AIBattleTerminal 
+                  lines={battleLines}
+                  isRunning={isRunning}
+                  attackerStrategy={currentStrategy}
+                  defenderStatus={defenderStatus}
+                  currentPayload=""
                 />
+                
+                {/* Classic Terminal - Collapsible */}
+                <details className="group">
+                  <summary className="cursor-pointer text-xs text-primary/50 font-mono flex items-center gap-2 hover:text-primary transition-colors">
+                    <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    {locale === 'zh' ? '查看详细日志' : 'View detailed logs'}
+                  </summary>
+                  <div className="mt-4">
+                    <AttackTerminal 
+                      lines={terminalLines} 
+                      isRunning={isRunning} 
+                    />
+                  </div>
+                </details>
               </div>
             )}
 
@@ -331,6 +412,7 @@ function HomeContent() {
                 <SecurityReport 
                   score={score}
                   results={results}
+                  endpoint={targetEndpoint}
                   isLocked={isReportLocked}
                   onUnlock={handleUnlockReport}
                 />
