@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import { I18nProvider, useI18n } from '@/lib/i18n'
 import { HeroSection } from '@/components/hero-section'
 import { AttackForm, type AttackConfig } from '@/components/attack-form'
 import { AttackTerminal } from '@/components/attack-terminal'
@@ -12,6 +13,7 @@ import { AboutSection } from '@/components/about-section'
 import { AttackVectorsSection } from '@/components/attack-vectors-section'
 import { FAQSection } from '@/components/faq-section'
 import { CTASection } from '@/components/cta-section'
+import { LanguageSwitcher } from '@/components/language-switcher'
 import { calculateSecurityScore } from '@/lib/payloads'
 import { RotateCcw, Github, Menu, X } from 'lucide-react'
 
@@ -24,12 +26,13 @@ interface TerminalLine {
 
 type AppPhase = 'input' | 'attacking' | 'report'
 
-export default function Home() {
+function HomeContent() {
+  const { t } = useI18n()
   const [phase, setPhase] = useState<AppPhase>('input')
   const [isRunning, setIsRunning] = useState(false)
   const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([
     { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
-    { id: 1, text: '等待目标...', type: 'info' }
+    { id: 1, text: t('terminal.waiting'), type: 'info' }
   ])
   const [results, setResults] = useState<AttackResult[]>([])
   const [isReportLocked, setIsReportLocked] = useState(true)
@@ -60,8 +63,8 @@ export default function Home() {
     ])
     setLineId(1)
 
-    addLine(`目标: ${config.endpoint}`, 'info')
-    addLine('正在初始化扫描...', 'system')
+    addLine(`${t('terminal.target')}: ${config.endpoint}`, 'info')
+    addLine(t('terminal.initializing'), 'system')
 
     try {
       const response = await fetch('/api/attack/stream', {
@@ -93,11 +96,11 @@ export default function Home() {
           const data = JSON.parse(line.replace('data: ', ''))
 
           if (data.type === 'init') {
-            addLine(`已加载 ${data.totalPayloads} 个攻击载荷`, 'info')
+            addLine(t('terminal.loaded', { count: data.totalPayloads }), 'info')
           }
 
           if (data.type === 'attack_start') {
-            addLine(`测试中: ${data.payload.name}`, 'attack')
+            addLine(`${t('terminal.testing')}: ${data.payload.name}`, 'attack')
           }
 
           if (data.type === 'attack_result') {
@@ -105,16 +108,16 @@ export default function Home() {
             attackResults.push(result)
             
             if (result.leaked) {
-              addLine(`发现漏洞 (置信度 ${result.confidence}%)`, 'success')
+              addLine(t('terminal.vulnerability', { confidence: result.confidence }), 'success')
             } else {
-              addLine(`测试通过 - 未发现漏洞`, 'error')
+              addLine(t('terminal.passed'), 'error')
             }
           }
 
           if (data.type === 'complete') {
             const breached = attackResults.filter(r => r.leaked).length
-            addLine('扫描完成', 'system')
-            addLine(`结果: 发现 ${breached}/${attackResults.length} 个漏洞`, 
+            addLine(t('terminal.complete'), 'system')
+            addLine(t('terminal.result', { found: breached, total: attackResults.length }), 
               breached > 0 ? 'warning' : 'info'
             )
             
@@ -131,7 +134,7 @@ export default function Home() {
         }
       }
     } catch (error) {
-      addLine(`错误: ${error instanceof Error ? error.message : '未知错误'}`, 'error')
+      addLine(`${t('terminal.error')}: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
       setIsRunning(false)
     }
   }
@@ -152,7 +155,7 @@ export default function Home() {
     setIsReportLocked(true)
     setTerminalLines([
       { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
-      { id: 1, text: '等待目标...', type: 'info' }
+      { id: 1, text: t('terminal.waiting'), type: 'info' }
     ])
     setLineId(2)
   }
@@ -184,20 +187,21 @@ export default function Home() {
                 onClick={scrollToTest}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                开始测试
+                {t('nav.startTest')}
               </button>
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                功能特性
+                {t('nav.features')}
               </a>
               <a href="#about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                关于我们
+                {t('nav.about')}
               </a>
               <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                常见问题
+                {t('nav.faq')}
               </a>
             </nav>
             
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-3">
+              <LanguageSwitcher />
               <a 
                 href="https://github.com" 
                 target="_blank" 
@@ -205,23 +209,25 @@ export default function Home() {
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Github className="w-4 h-4" />
-                GitHub
               </a>
               <button 
                 onClick={scrollToTest}
                 className="px-4 py-2 bg-foreground text-background text-sm font-medium rounded-lg hover:bg-foreground/90 transition-colors"
               >
-                免费试用
+                {t('nav.freeTrial')}
               </button>
             </div>
             
             {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            <div className="flex md:hidden items-center gap-2">
+              <LanguageSwitcher />
+              <button 
+                className="p-2"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
           
           {/* Mobile Menu */}
@@ -231,22 +237,22 @@ export default function Home() {
                 onClick={scrollToTest}
                 className="block w-full text-left text-sm text-muted-foreground hover:text-foreground"
               >
-                开始测试
+                {t('nav.startTest')}
               </button>
               <a href="#features" className="block text-sm text-muted-foreground hover:text-foreground">
-                功能特性
+                {t('nav.features')}
               </a>
               <a href="#about" className="block text-sm text-muted-foreground hover:text-foreground">
-                关于我们
+                {t('nav.about')}
               </a>
               <a href="#faq" className="block text-sm text-muted-foreground hover:text-foreground">
-                常见问题
+                {t('nav.faq')}
               </a>
               <button 
                 onClick={scrollToTest}
                 className="w-full px-4 py-2 bg-foreground text-background text-sm font-medium rounded-lg"
               >
-                免费试用
+                {t('nav.freeTrial')}
               </button>
             </div>
           )}
@@ -266,10 +272,10 @@ export default function Home() {
               <div>
                 <div className="text-center mb-8">
                   <h2 className="text-xl font-semibold text-foreground mb-2">
-                    正在扫描中
+                    {t('scanning.title')}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    正在测试提示词注入漏洞...
+                    {t('scanning.subtitle')}
                   </p>
                 </div>
                 <AttackTerminal 
@@ -284,10 +290,10 @@ export default function Home() {
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground">
-                      安全报告
+                      {t('report.title')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      扫描完成，请查看结果
+                      {t('report.subtitle')}
                     </p>
                   </div>
                   <button 
@@ -295,7 +301,7 @@ export default function Home() {
                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    新扫描
+                    {t('report.newScan')}
                   </button>
                 </div>
                 <SecurityReport 
@@ -346,25 +352,25 @@ export default function Home() {
                   <span className="font-semibold text-foreground text-lg">AntiClaude</span>
                 </div>
                 <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                  面向 AI 开发者的自动化渗透测试平台。在攻击者之前发现漏洞，保护你的 AI 应用安全。
+                  {t('footer.description')}
                 </p>
               </div>
               
               {/* Links */}
               <div>
-                <h4 className="font-medium text-foreground mb-4">产品</h4>
+                <h4 className="font-medium text-foreground mb-4">{t('footer.product')}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><button onClick={scrollToTest} className="hover:text-foreground transition-colors">安全扫描</button></li>
-                  <li><span className="text-muted-foreground/50">CI/CD 集成 (即将推出)</span></li>
-                  <li><span className="text-muted-foreground/50">企业版 (即将推出)</span></li>
+                  <li><button onClick={scrollToTest} className="hover:text-foreground transition-colors">{t('footer.scan')}</button></li>
+                  <li><span className="text-muted-foreground/50">{t('footer.cicd')} ({t('footer.comingSoon')})</span></li>
+                  <li><span className="text-muted-foreground/50">{t('footer.enterprise')} ({t('footer.comingSoon')})</span></li>
                 </ul>
               </div>
               
               <div>
-                <h4 className="font-medium text-foreground mb-4">资源</h4>
+                <h4 className="font-medium text-foreground mb-4">{t('footer.resources')}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><a href="#" className="hover:text-foreground transition-colors">文档</a></li>
-                  <li><a href="#" className="hover:text-foreground transition-colors">博客</a></li>
+                  <li><a href="#" className="hover:text-foreground transition-colors">{t('nav.docs')}</a></li>
+                  <li><a href="#" className="hover:text-foreground transition-colors">{t('nav.blog')}</a></li>
                   <li><a href="https://github.com" className="hover:text-foreground transition-colors">GitHub</a></li>
                 </ul>
               </div>
@@ -372,12 +378,12 @@ export default function Home() {
             
             <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-xs text-muted-foreground">
-                2024 AntiClaude. All rights reserved.
+                2024 AntiClaude. {t('footer.rights')}
               </p>
               <div className="flex items-center gap-6 text-xs text-muted-foreground">
-                <a href="#" className="hover:text-foreground transition-colors">隐私政策</a>
-                <a href="#" className="hover:text-foreground transition-colors">服务条款</a>
-                <a href="#" className="hover:text-foreground transition-colors">联系我们</a>
+                <a href="#" className="hover:text-foreground transition-colors">{t('footer.privacy')}</a>
+                <a href="#" className="hover:text-foreground transition-colors">{t('footer.terms')}</a>
+                <a href="#" className="hover:text-foreground transition-colors">{t('footer.contact')}</a>
               </div>
             </div>
           </div>
@@ -392,5 +398,13 @@ export default function Home() {
         vulnerabilityCount={vulnerabilityCount}
       />
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <I18nProvider>
+      <HomeContent />
+    </I18nProvider>
   )
 }

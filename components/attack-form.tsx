@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,6 +19,7 @@ export interface AttackConfig {
 }
 
 export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
+  const { t } = useI18n()
   const [endpoint, setEndpoint] = useState('')
   const [authHeader, setAuthHeader] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -47,19 +49,19 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
       {/* Main Input */}
       <div className="space-y-2">
         <Label htmlFor="endpoint" className="text-sm font-medium text-foreground">
-          API Endpoint
+          {t('form.endpoint')}
         </Label>
         <Input
           id="endpoint"
           type="url"
-          placeholder="https://api.your-app.com/chat"
+          placeholder={t('form.endpointPlaceholder')}
           value={endpoint}
           onChange={(e) => setEndpoint(e.target.value)}
           className="h-12 bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
           disabled={isRunning}
         />
         <p className="text-xs text-muted-foreground">
-          Enter your AI chat API endpoint that accepts user messages
+          {t('form.endpointHint')}
         </p>
       </div>
 
@@ -70,25 +72,25 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        Advanced Options
+        {t('form.advanced')}
       </button>
 
       {showAdvanced && (
         <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
           <Label htmlFor="auth" className="text-sm font-medium text-foreground">
-            Authorization Header
+            {t('form.authHeader')}
           </Label>
           <Input
             id="auth"
             type="text"
-            placeholder="Bearer sk-xxx..."
+            placeholder={t('form.authHeaderPlaceholder')}
             value={authHeader}
             onChange={(e) => setAuthHeader(e.target.value)}
             className="h-12 bg-input border-border text-foreground placeholder:text-muted-foreground font-mono text-sm"
             disabled={isRunning}
           />
           <p className="text-xs text-muted-foreground">
-            Optional: Add if your API requires authentication
+            {t('form.authHint')}
           </p>
         </div>
       )}
@@ -97,7 +99,7 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
       <div className="flex items-start gap-3 p-3 bg-secondary/50 border border-border rounded-lg">
         <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Only test APIs you own or have permission to test. AntiClaude sends safe, non-destructive payloads.
+          {t('form.notice')}
         </p>
       </div>
 
@@ -110,12 +112,12 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
         {isRunning ? (
           <span className="flex items-center gap-2">
             <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
-            Running Attack...
+            {t('form.scanning')}
           </span>
         ) : (
           <span className="flex items-center gap-2">
             <Play className="w-4 h-4" />
-            Start Security Scan
+            {t('form.startScan')}
           </span>
         )}
       </Button>

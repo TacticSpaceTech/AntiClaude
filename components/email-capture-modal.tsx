@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ interface EmailCaptureModalProps {
 }
 
 export function EmailCaptureModal({ isOpen, onClose, onSubmit, vulnerabilityCount }: EmailCaptureModalProps) {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -64,10 +66,10 @@ export function EmailCaptureModal({ isOpen, onClose, onSubmit, vulnerabilityCoun
                 <CheckCircle2 className="w-7 h-7 text-success" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-1">
-                Report Unlocked
+                {t('email.unlocked')}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Loading full results...
+                {t('email.loading')}
               </p>
             </div>
           ) : (
@@ -78,10 +80,10 @@ export function EmailCaptureModal({ isOpen, onClose, onSubmit, vulnerabilityCoun
                   <span className="text-2xl font-bold text-danger">{vulnerabilityCount}</span>
                 </div>
                 <h2 className="text-lg font-semibold text-foreground mb-2">
-                  Vulnerabilities Detected
+                  {t('email.detected')}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Enter your email to unlock the full report with detailed fixes.
+                  {t('email.subtitle')}
                 </p>
               </div>
 
@@ -89,14 +91,14 @@ export function EmailCaptureModal({ isOpen, onClose, onSubmit, vulnerabilityCoun
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                    Work Email
+                    {t('email.label')}
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="you@company.com"
+                      placeholder={t('email.placeholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10 h-11 bg-input border-border text-foreground placeholder:text-muted-foreground"
@@ -113,17 +115,17 @@ export function EmailCaptureModal({ isOpen, onClose, onSubmit, vulnerabilityCoun
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <span className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
-                      Unlocking...
+                      {t('email.unlocking')}
                     </span>
                   ) : (
-                    'Unlock Full Report'
+                    t('email.submit')
                   )}
                 </Button>
               </form>
 
               {/* Footer */}
               <p className="text-xs text-muted-foreground text-center mt-4">
-                No spam. We only send security updates.
+                {t('email.privacy')}
               </p>
             </>
           )}
