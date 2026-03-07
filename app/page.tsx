@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { I18nProvider, useI18n } from '@/lib/i18n'
 import { HeroSection } from '@/components/hero-section'
+import { MatrixRain } from '@/components/matrix-rain'
 import { AttackForm, type AttackConfig } from '@/components/attack-form'
 import { AttackTerminal } from '@/components/attack-terminal'
 import { SecurityReport, type AttackResult } from '@/components/security-report'
@@ -169,16 +170,19 @@ function HomeContent() {
   const vulnerabilityCount = results.filter(r => r.leaked).length
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="relative">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Matrix Rain Background */}
+      <MatrixRain />
+      
+      <main className="relative z-10">
         {/* Header */}
-        <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
-                <span className="text-background font-bold text-sm">A</span>
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(0,255,65,0.4)]">
+                <span className="text-primary-foreground font-bold text-sm font-mono">A</span>
               </div>
-              <span className="font-semibold text-foreground text-lg">AntiClaude</span>
+              <span className="font-semibold text-primary text-lg font-mono drop-shadow-[0_0_10px_rgba(0,255,65,0.3)]">AntiClaude</span>
             </div>
             
             {/* Desktop Nav */}
@@ -212,7 +216,7 @@ function HomeContent() {
               </a>
               <button 
                 onClick={scrollToTest}
-                className="px-4 py-2 bg-foreground text-background text-sm font-medium rounded-lg hover:bg-foreground/90 transition-colors"
+                className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(0,255,65,0.3)] font-mono"
               >
                 {t('nav.freeTrial')}
               </button>
@@ -340,16 +344,16 @@ function HomeContent() {
         <CTASection onStartTest={scrollToTest} />
 
         {/* Footer */}
-        <footer className="border-t border-border bg-card/50">
+        <footer className="border-t border-primary/10 bg-black/40 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto px-6 py-12">
             <div className="grid md:grid-cols-4 gap-8 mb-12">
               {/* Brand */}
               <div className="md:col-span-2">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
-                    <span className="text-background font-bold text-sm">A</span>
+                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+                    <span className="text-primary-foreground font-bold text-sm font-mono">A</span>
                   </div>
-                  <span className="font-semibold text-foreground text-lg">AntiClaude</span>
+                  <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
                 </div>
                 <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
                   {t('footer.description')}
@@ -358,32 +362,32 @@ function HomeContent() {
               
               {/* Links */}
               <div>
-                <h4 className="font-medium text-foreground mb-4">{t('footer.product')}</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><button onClick={scrollToTest} className="hover:text-foreground transition-colors">{t('footer.scan')}</button></li>
-                  <li><span className="text-muted-foreground/50">{t('footer.cicd')} ({t('footer.comingSoon')})</span></li>
-                  <li><span className="text-muted-foreground/50">{t('footer.enterprise')} ({t('footer.comingSoon')})</span></li>
+                <h4 className="font-mono text-primary/70 mb-4 text-sm">{'// '}{t('footer.product')}</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground font-mono">
+                  <li><button onClick={scrollToTest} className="hover:text-primary transition-colors">{t('footer.scan')}</button></li>
+                  <li><span className="text-muted-foreground/40">{t('footer.cicd')} ({t('footer.comingSoon')})</span></li>
+                  <li><span className="text-muted-foreground/40">{t('footer.enterprise')} ({t('footer.comingSoon')})</span></li>
                 </ul>
               </div>
               
               <div>
-                <h4 className="font-medium text-foreground mb-4">{t('footer.resources')}</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><a href="#" className="hover:text-foreground transition-colors">{t('nav.docs')}</a></li>
-                  <li><a href="#" className="hover:text-foreground transition-colors">{t('nav.blog')}</a></li>
-                  <li><a href="https://github.com" className="hover:text-foreground transition-colors">GitHub</a></li>
+                <h4 className="font-mono text-primary/70 mb-4 text-sm">{'// '}{t('footer.resources')}</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground font-mono">
+                  <li><a href="#" className="hover:text-primary transition-colors">{t('nav.docs')}</a></li>
+                  <li><a href="#" className="hover:text-primary transition-colors">{t('nav.blog')}</a></li>
+                  <li><a href="https://github.com" className="hover:text-primary transition-colors">GitHub</a></li>
                 </ul>
               </div>
             </div>
             
-            <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-muted-foreground">
-                2024 AntiClaude. {t('footer.rights')}
+            <div className="pt-8 border-t border-primary/10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-primary/40 font-mono">
+                {'// '}2024 AntiClaude. {t('footer.rights')}
               </p>
-              <div className="flex items-center gap-6 text-xs text-muted-foreground">
-                <a href="#" className="hover:text-foreground transition-colors">{t('footer.privacy')}</a>
-                <a href="#" className="hover:text-foreground transition-colors">{t('footer.terms')}</a>
-                <a href="#" className="hover:text-foreground transition-colors">{t('footer.contact')}</a>
+              <div className="flex items-center gap-6 text-xs text-muted-foreground font-mono">
+                <a href="#" className="hover:text-primary transition-colors">{t('footer.privacy')}</a>
+                <a href="#" className="hover:text-primary transition-colors">{t('footer.terms')}</a>
+                <a href="#" className="hover:text-primary transition-colors">{t('footer.contact')}</a>
               </div>
             </div>
           </div>

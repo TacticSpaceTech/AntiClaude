@@ -19,11 +19,13 @@ export function FAQSection() {
   ]
   
   return (
-    <section className="py-24 border-t border-border">
-      <div className="max-w-3xl mx-auto px-6">
+    <section className="py-24 border-t border-primary/10 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(0,255,65,0.03)_0%,_transparent_50%)]" />
+      
+      <div className="max-w-3xl mx-auto px-6 relative">
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-muted-foreground mb-3 tracking-wide uppercase">
-            {t('faq.label')}
+          <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">
+            {'// '}{t('faq.label')}
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
             {t('faq.title')}
@@ -34,18 +36,19 @@ export function FAQSection() {
           {faqs.map((faq, index) => (
             <div 
               key={index}
-              className="border border-border rounded-xl overflow-hidden"
+              className="border border-primary/20 rounded-lg overflow-hidden bg-black/40 backdrop-blur-sm hover:border-primary/30 transition-colors"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full p-5 text-left flex items-center justify-between gap-4 bg-card hover:bg-card/80 transition-colors"
+                className="w-full p-5 text-left flex items-center justify-between gap-4 hover:bg-primary/5 transition-colors"
               >
-                <span className="font-medium text-foreground">
+                <span className="font-medium text-foreground font-mono text-sm">
+                  <span className="text-primary/50 mr-2">[{String(index).padStart(2, '0')}]</span>
                   {t(faq.qKey)}
                 </span>
                 <ChevronDown 
                   className={cn(
-                    "w-5 h-5 text-muted-foreground shrink-0 transition-transform",
+                    "w-5 h-5 text-primary/50 shrink-0 transition-transform",
                     openIndex === index && "rotate-180"
                   )}
                 />
@@ -57,7 +60,7 @@ export function FAQSection() {
                 )}
               >
                 <div className="overflow-hidden">
-                  <p className="p-5 pt-0 text-sm text-muted-foreground leading-relaxed">
+                  <p className="p-5 pt-0 text-sm text-muted-foreground leading-relaxed border-t border-primary/10">
                     {t(faq.aKey)}
                   </p>
                 </div>

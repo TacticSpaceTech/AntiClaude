@@ -13,11 +13,16 @@ export function HowItWorksSection() {
   ]
 
   return (
-    <section className="py-24 border-t border-border bg-card/50">
-      <div className="max-w-5xl mx-auto px-6">
+    <section className="py-24 border-t border-primary/10 bg-black/20 relative">
+      {/* Scan line effect */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse" style={{ top: '30%' }} />
+      </div>
+      
+      <div className="max-w-5xl mx-auto px-6 relative">
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-muted-foreground mb-3 tracking-wide uppercase">
-            {t('howItWorks.label')}
+          <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">
+            {'// '}{t('howItWorks.label')}
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
             {t('howItWorks.title')}
@@ -29,14 +34,18 @@ export function HowItWorksSection() {
         
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, index) => (
-            <div key={step.number} className="relative">
+            <div key={step.number} className="relative group">
+              {/* Connector line */}
               {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-6 left-full w-full h-px bg-border -translate-x-4" />
+                <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-primary/30 to-transparent -translate-x-4" />
               )}
-              <div className="text-4xl font-bold text-border mb-4">
+              
+              {/* Step number */}
+              <div className="text-5xl font-bold font-mono text-primary/20 mb-4 group-hover:text-primary/40 transition-colors drop-shadow-[0_0_10px_rgba(0,255,65,0.1)] group-hover:drop-shadow-[0_0_15px_rgba(0,255,65,0.2)]">
                 {step.number}
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              
+              <h3 className="text-lg font-semibold text-foreground mb-2 font-mono">
                 {t(step.titleKey)}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">

@@ -40,11 +40,14 @@ export function FeaturesSection() {
   ]
 
   return (
-    <section className="py-24 border-t border-border">
-      <div className="max-w-5xl mx-auto px-6">
+    <section className="py-24 border-t border-primary/10 relative">
+      {/* Background glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(0,255,65,0.03)_0%,_transparent_50%)]" />
+      
+      <div className="max-w-5xl mx-auto px-6 relative">
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-muted-foreground mb-3 tracking-wide uppercase">
-            {t('features.label')}
+          <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">
+            {'// '}{t('features.label')}
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
             {t('features.title')}
@@ -55,15 +58,16 @@ export function FeaturesSection() {
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature) => (
+          {features.map((feature, index) => (
             <div 
               key={feature.titleKey}
-              className="group p-6 rounded-xl bg-card border border-border hover:border-foreground/20 transition-colors"
+              className="group p-6 rounded-lg bg-black/40 backdrop-blur-sm border border-primary/20 hover:border-primary/40 transition-all hover:shadow-[0_0_20px_rgba(0,255,65,0.1)]"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center mb-4 group-hover:bg-foreground/10 transition-colors">
-                <feature.icon className="w-5 h-5 text-foreground" />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:border-primary/40 transition-all group-hover:shadow-[0_0_15px_rgba(0,255,65,0.2)]">
+                <feature.icon className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2 font-mono">
                 {t(feature.titleKey)}
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">

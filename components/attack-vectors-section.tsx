@@ -53,17 +53,20 @@ export function AttackVectorsSection() {
   ]
 
   const severityStyles = {
-    critical: 'bg-danger/10 text-danger border-danger/20',
-    high: 'bg-warning/10 text-warning border-warning/20',
-    medium: 'bg-chart-4/10 text-chart-4 border-chart-4/20'
+    critical: 'bg-danger/20 text-danger border-danger/30 shadow-[0_0_10px_rgba(255,50,50,0.2)]',
+    high: 'bg-warning/20 text-warning border-warning/30 shadow-[0_0_10px_rgba(255,200,50,0.2)]',
+    medium: 'bg-primary/20 text-primary border-primary/30 shadow-[0_0_10px_rgba(0,255,65,0.2)]'
   }
 
   return (
-    <section className="py-24 border-t border-border bg-card/50">
-      <div className="max-w-5xl mx-auto px-6">
+    <section className="py-24 border-t border-primary/10 bg-black/20 relative">
+      {/* Background pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,65,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,65,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      
+      <div className="max-w-5xl mx-auto px-6 relative">
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-muted-foreground mb-3 tracking-wide uppercase">
-            {t('vectors.label')}
+          <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">
+            {'// '}{t('vectors.label')}
           </p>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
             {t('vectors.title')}
@@ -77,18 +80,18 @@ export function AttackVectorsSection() {
           {attackCategories.map((cat) => (
             <div 
               key={cat.category}
-              className="p-6 rounded-xl bg-background border border-border"
+              className="p-6 rounded-lg bg-black/60 backdrop-blur-sm border border-primary/20 hover:border-primary/40 transition-all group"
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                  <h3 className="text-lg font-semibold text-foreground mb-1 font-mono">
                     {t(cat.categoryKey)}
                   </h3>
-                  <p className="text-xs text-muted-foreground font-mono">
+                  <p className="text-xs text-primary/50 font-mono">
                     {cat.category}
                   </p>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded border ${severityStyles[cat.severity]}`}>
+                <span className={`text-xs font-mono font-bold px-2 py-1 rounded border ${severityStyles[cat.severity]}`}>
                   {t(`vectors.${cat.severity}` as const)}
                 </span>
               </div>
@@ -98,14 +101,15 @@ export function AttackVectorsSection() {
               </p>
               
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">{t('vectors.example')}:</p>
+                <p className="text-xs text-primary/50 font-mono">{'// '}{t('vectors.example')}:</p>
                 {cat.examples.map((example, index) => (
                   <div 
                     key={index}
-                    className="p-2 rounded bg-secondary/50 text-xs font-mono text-muted-foreground truncate"
+                    className="p-2 rounded bg-black/40 border border-primary/10 text-xs font-mono text-primary/70 truncate group-hover:border-primary/20 transition-colors"
                     title={example}
                   >
-                    {example.length > 60 ? example.slice(0, 60) + '...' : example}
+                    <span className="text-primary/40">{'>'} </span>
+                    {example.length > 55 ? example.slice(0, 55) + '...' : example}
                   </div>
                 ))}
               </div>
