@@ -8,8 +8,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'AntiClaude - AI Security Red Teaming Platform',
-  description: 'Is your AI Agent bulletproof? Let AntiClaude break it. Automated LLM penetration testing for developers.',
-  generator: 'v0.app',
+  description: 'npm-native AI Agent security red team tool. 48 payloads, 5 OWASP Agentic categories. Scan via Web or npx anticlaude scan.',
   icons: {
     icon: [
       {
