@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Zap, Github } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 
 // Typewriter effect hook
@@ -11,7 +12,7 @@ function useTypewriter(text: string, speed: number = 50, delay: number = 0) {
   useEffect(() => {
     setDisplayText('')
     setIsComplete(false)
-    
+
     const timeout = setTimeout(() => {
       let index = 0
       const interval = setInterval(() => {
@@ -23,10 +24,10 @@ function useTypewriter(text: string, speed: number = 50, delay: number = 0) {
           clearInterval(interval)
         }
       }, speed)
-      
+
       return () => clearInterval(interval)
     }, delay)
-    
+
     return () => clearTimeout(timeout)
   }, [text, speed, delay])
 
@@ -36,36 +37,40 @@ function useTypewriter(text: string, speed: number = 50, delay: number = 0) {
 // Glitch text effect
 function GlitchText({ children, className }: { children: string; className?: string }) {
   const [glitchText, setGlitchText] = useState(children)
-  
+
   useEffect(() => {
     const chars = 'アイウエオカキクケコ0123456789!@#$%'
     let glitchInterval: NodeJS.Timeout
-    
+
     const glitch = () => {
       const randomIndex = Math.floor(Math.random() * children.length)
       const randomChar = chars[Math.floor(Math.random() * chars.length)]
       const newText = children.slice(0, randomIndex) + randomChar + children.slice(randomIndex + 1)
       setGlitchText(newText)
-      
+
       setTimeout(() => setGlitchText(children), 100)
     }
-    
+
     glitchInterval = setInterval(glitch, 3000 + Math.random() * 2000)
-    
+
     return () => clearInterval(glitchInterval)
   }, [children])
-  
+
   return <span className={className}>{glitchText}</span>
 }
 
-export function HeroSection() {
+interface HeroSectionProps {
+  onScrollToScan?: () => void
+}
+
+export function HeroSection({ onScrollToScan }: HeroSectionProps) {
   const { t } = useI18n()
   const [mounted, setMounted] = useState(false)
-  
+
   const terminalLine1 = useTypewriter('> initializing_anticlaude_v2.0...', 30, 500)
   const terminalLine2 = useTypewriter('> loading_attack_vectors: [████████████] 100%', 20, 2000)
   const terminalLine3 = useTypewriter('> system_ready. awaiting_target...', 30, 4000)
-  
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -110,7 +115,7 @@ export function HeroSection() {
       {/* Main Headline */}
       <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mb-6 leading-tight tracking-tight text-balance">
         <GlitchText className="block">{t('hero.title')}</GlitchText>
-        <span className="block mt-2 text-primary drop-shadow-[0_0_20px_rgba(0,255,65,0.5)]">
+        <span className="block mt-2 bg-gradient-to-r from-primary via-[#00ff41] to-[#39ff14] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(0,255,65,0.4)]">
           {t('hero.titleHighlight')}
         </span>
       </h1>
@@ -119,16 +124,32 @@ export function HeroSection() {
       <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed text-pretty font-mono">
         {t('hero.subtitle')}
       </p>
-      
+
       <p className="text-sm text-muted-foreground/70 max-w-xl mx-auto mb-12 font-mono">
         {'// '}{t('hero.description')}
       </p>
 
+      {/* Trust Bar */}
+      <div className="flex items-center justify-center gap-6 mt-8 mb-2 flex-wrap">
+        <span className="text-xs text-primary/40 font-mono flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+          {t('hero.trustOwasp')}
+        </span>
+        <span className="text-xs text-primary/40 font-mono flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+          {t('hero.trustOpen')}
+        </span>
+        <span className="text-xs text-primary/40 font-mono flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+          {t('hero.trustNpm')}
+        </span>
+      </div>
+
       {/* Stats with Matrix styling */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-6">
         {[
-          { value: '12+', label: t('hero.stat1') },
-          { value: '4', label: t('hero.stat2') },
+          { value: '48', label: t('hero.stat1') },
+          { value: '5', label: t('hero.stat2') },
           { value: '<30s', label: t('hero.stat3') },
           { value: t('hero.stat4Value'), label: t('hero.stat4') },
         ].map((stat, index) => (
@@ -143,6 +164,30 @@ export function HeroSection() {
             <p className="text-xs text-muted-foreground mt-1 font-mono">{stat.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* CTA Buttons */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+        <button
+          onClick={onScrollToScan}
+          className="px-8 py-3 bg-primary text-primary-foreground font-mono font-bold rounded-lg
+                     shadow-[0_0_30px_rgba(0,255,65,0.4)] hover:shadow-[0_0_45px_rgba(0,255,65,0.6)]
+                     hover:bg-primary/90 transition-all duration-300 flex items-center gap-2"
+        >
+          <Zap className="w-4 h-4" />
+          {t('hero.ctaButton')}
+        </button>
+        <a
+          href="https://github.com/anthropics/anticlaude"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-6 py-3 border border-primary/30 text-primary/70 font-mono rounded-lg
+                     hover:border-primary/60 hover:text-primary transition-all duration-300
+                     flex items-center gap-2 text-sm"
+        >
+          <Github className="w-4 h-4" />
+          {t('hero.ctaSecondary')}
+        </a>
       </div>
 
       {/* Decorative elements */}

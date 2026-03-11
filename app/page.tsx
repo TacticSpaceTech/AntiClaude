@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { I18nProvider, useI18n } from '@/lib/i18n'
 import { HeroSection } from '@/components/hero-section'
 import { MatrixRain } from '@/components/matrix-rain'
@@ -22,7 +22,7 @@ import { RotateCcw, Github, Menu, X } from 'lucide-react'
 type AppPhase = 'input' | 'attacking' | 'report'
 
 function HomeContent() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [phase, setPhase] = useState<AppPhase>('input')
   const [isRunning, setIsRunning] = useState(false)
   const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([
@@ -40,6 +40,7 @@ function HomeContent() {
   const [defenderStatus, setDefenderStatus] = useState<'analyzing' | 'blocking' | 'vulnerable' | 'idle'>('idle')
   const [targetEndpoint, setTargetEndpoint] = useState('')
   const testSectionRef = useRef<HTMLDivElement>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const addBattleLine = useCallback((
     source: BattleLine['source'],
@@ -87,7 +88,19 @@ function HomeContent() {
     })
   }, [])
 
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+    }
+  }, [])
+
+  const handleStopAttack = () => {
+    abortControllerRef.current?.abort()
+  }
+
   const handleStartAttack = async (config: AttackConfig) => {
+    const controller = new AbortController()
+    abortControllerRef.current = controller
     setPhase('attacking')
     setIsRunning(true)
     setResults([])
@@ -115,7 +128,8 @@ function HomeContent() {
           endpoint: config.endpoint,
           authHeader: config.authHeader,
           payloadCount: 6
-        })
+        }),
+        signal: controller.signal
       })
 
       if (!response.body) {
@@ -125,16 +139,26 @@ function HomeContent() {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       const attackResults: AttackResult[] = []
+      let sseBuffer = ''
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n\n').filter(line => line.startsWith('data: '))
+        sseBuffer += decoder.decode(value, { stream: true })
+        const frames = sseBuffer.split('\n\n')
+        sseBuffer = frames.pop() ?? ''
 
-        for (const line of lines) {
-          const data = JSON.parse(line.replace('data: ', ''))
+        for (const frame of frames) {
+          if (!frame.startsWith('data: ')) continue
+          const jsonStr = frame.slice(6).trim()
+          if (!jsonStr) continue
+          let data: any
+          try {
+            data = JSON.parse(jsonStr)
+          } catch {
+            continue
+          }
 
           if (data.type === 'init') {
             addLine(t('terminal.loaded', { count: data.totalPayloads }), 'info')
@@ -142,69 +166,80 @@ function HomeContent() {
 
           if (data.type === 'attack_start') {
             addLine(
-              `${t('terminal.testing')}: ${data.payload.name} [${data.payload.severity.toUpperCase()}]`, 
+              `${t('terminal.testing')}: ${data.payload.name} [${data.payload.severity.toUpperCase()}]`,
               'attack',
               { details: data.payload.prompt }
             )
-            
+
             // AI Battle: Attacker move
             setDefenderStatus('analyzing')
-            const strategy = data.payload.category === 'jailbreak' ? 'roleplay' : 
-                           data.payload.category === 'translation_bypass' ? 'encoding' : 'direct'
+            const strategy = data.result?.strategy || 'direct'
             setCurrentStrategy(strategy)
-            addBattleLine('attacker', `[${data.payload.severity.toUpperCase()}] ${data.payload.name}`, { 
+            addBattleLine('attacker', `[${data.payload.severity.toUpperCase()}] ${data.payload.name}`, {
               thinking: locale === 'zh' ? '选择攻击策略: ' + strategy : 'Selecting strategy: ' + strategy,
-              isStreaming: true 
+              isStreaming: true
             })
+          }
+
+          if (data.type === 'strategy_selected') {
+            const strategy = data.strategy as string
+            setCurrentStrategy(strategy)
+            addLine(`Strategy: ${strategy} → ${data.payloadName}`, 'info')
+            addBattleLine('attacker', locale === 'zh' ? `切换策略: ${strategy}` : `Switching strategy: ${strategy}`, {
+              thinking: locale === 'zh' ? '调整攻击角度...' : 'Adjusting attack vector...',
+              isStreaming: true
+            })
+          }
+
+          if (data.type === 'error') {
+            addLine(`Error: ${data.message}`, 'warning')
           }
 
           if (data.type === 'attack_result') {
             const result = data.result as AttackResult
             attackResults.push(result)
-            
+
             if (result.leaked) {
               addLine(
-                t('terminal.vulnerability', { confidence: result.confidence }), 
+                t('terminal.vulnerability', { confidence: result.confidence }),
                 'success',
-                { 
-                  confidence: result.confidence, 
+                {
+                  confidence: result.confidence,
                   indicators: result.indicators,
                   details: result.response?.slice(0, 150)
                 }
               )
-              
+
               // AI Battle: Successful breach
               setDefenderStatus('vulnerable')
               addBattleLine('defender', locale === 'zh' ? '防线被突破!' : 'Defense breached!', { confidence: 100 - result.confidence })
               addBattleLine('result', `[LEAK] ${locale === 'zh' ? '置信度' : 'Confidence'}: ${result.confidence}%`, { confidence: result.confidence })
+            } else if (result.error) {
+              addLine(`API Error: ${result.error}`, 'warning')
             } else {
               addLine(t('terminal.passed'), 'error')
-              
+
               // AI Battle: Blocked
               setDefenderStatus('blocking')
               addBattleLine('defender', locale === 'zh' ? '攻击已拦截' : 'Attack blocked', { confidence: 100 })
               addBattleLine('result', `[SAFE] ${locale === 'zh' ? '防护有效' : 'Defense held'}`)
             }
-            
+
             // Reset defender status after a short delay
             setTimeout(() => setDefenderStatus('idle'), 500)
-            
-            // Show if API call was simulated
-            if (result.isSimulated && result.error) {
-              addLine(`API Error: ${result.error} (using simulated response)`, 'warning')
-            }
           }
 
           if (data.type === 'complete') {
             const breached = attackResults.filter(r => r.leaked).length
             addLine(t('terminal.complete'), 'system')
-            addLine(t('terminal.result', { found: breached, total: attackResults.length }), 
+            addLine(t('terminal.result', { found: breached, total: attackResults.length }),
               breached > 0 ? 'warning' : 'info'
             )
-            
+
             setResults(attackResults)
             setIsRunning(false)
-            
+            abortControllerRef.current = null
+
             setTimeout(() => {
               setPhase('report')
               if (breached > 0) {
@@ -215,7 +250,12 @@ function HomeContent() {
         }
       }
     } catch (error) {
-      addLine(`${t('terminal.error')}: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+      if (error instanceof Error && error.name === 'AbortError') {
+        addLine('Scan cancelled.', 'warning')
+      } else {
+        addLine(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+      }
+      setPhase('report')
       setIsRunning(false)
     }
   }
@@ -287,7 +327,7 @@ function HomeContent() {
             <div className="hidden md:flex items-center gap-3">
               <LanguageSwitcher />
               <a 
-                href="https://github.com" 
+                href="https://github.com/anthropics/anticlaude" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -347,7 +387,7 @@ function HomeContent() {
           <div className="max-w-2xl mx-auto px-6">
             {phase === 'input' && (
               <>
-                <HeroSection />
+                <HeroSection onScrollToScan={scrollToTest} />
                 <AttackForm onStartAttack={handleStartAttack} isRunning={isRunning} />
               </>
             )}
@@ -361,6 +401,16 @@ function HomeContent() {
                   <p className="text-sm text-muted-foreground">
                     {t('scanning.subtitle')}
                   </p>
+                  {isRunning && (
+                    <div className="mt-3">
+                      <button
+                        onClick={handleStopAttack}
+                        className="px-3 py-1 text-xs font-mono text-danger border border-danger/30 rounded hover:bg-danger/10 transition-colors"
+                      >
+                        {locale === 'zh' ? '停止扫描' : 'Stop Scan'}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 
                 {/* AI Battle Terminal - Featured */}
@@ -467,8 +517,8 @@ function HomeContent() {
                 <h4 className="font-mono text-primary/70 mb-4 text-sm">{'// '}{t('footer.product')}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground font-mono">
                   <li><button onClick={scrollToTest} className="hover:text-primary transition-colors">{t('footer.scan')}</button></li>
-                  <li><span className="text-muted-foreground/40">{t('footer.cicd')} ({t('footer.comingSoon')})</span></li>
-                  <li><span className="text-muted-foreground/40">{t('footer.enterprise')} ({t('footer.comingSoon')})</span></li>
+                  <li><a href="https://github.com/anthropics/anticlaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.cicd')}</a></li>
+                  <li><a href="https://github.com/anthropics/anticlaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.enterprise')}</a></li>
                 </ul>
               </div>
               
@@ -477,14 +527,14 @@ function HomeContent() {
                 <ul className="space-y-2 text-sm text-muted-foreground font-mono">
                   <li><a href="#" className="hover:text-primary transition-colors">{t('nav.docs')}</a></li>
                   <li><a href="#" className="hover:text-primary transition-colors">{t('nav.blog')}</a></li>
-                  <li><a href="https://github.com" className="hover:text-primary transition-colors">GitHub</a></li>
+                  <li><a href="https://github.com/anthropics/anticlaude" className="hover:text-primary transition-colors">GitHub</a></li>
                 </ul>
               </div>
             </div>
             
             <div className="pt-8 border-t border-primary/10 flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-xs text-primary/40 font-mono">
-                {'// '}2024 AntiClaude. {t('footer.rights')}
+                {'// '}2026 AntiClaude. {t('footer.rights')}
               </p>
               <div className="flex items-center gap-6 text-xs text-muted-foreground font-mono">
                 <a href="#" className="hover:text-primary transition-colors">{t('footer.privacy')}</a>
