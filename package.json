@@ -8,7 +8,7 @@
     "build:payloads": "node scripts/build-payloads.mjs",
     "build:engine": "cd packages/engine && npm run build",
     "build:cli": "cd packages/cli && npm run build",
-    "start": "next start",
+    "start": "next start -p ${PORT:-3000}",
     "lint": "eslint ."
   },
   "dependencies": {
