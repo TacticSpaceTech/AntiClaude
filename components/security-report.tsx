@@ -22,6 +22,7 @@ export interface AttackResult {
   requestDuration?: number
   error?: string | null
   isSimulated?: boolean
+  strategy?: string
 }
 
 interface SecurityReportProps {
@@ -97,15 +98,24 @@ export function SecurityReport({ score, results, endpoint = 'https://api.example
     ? Math.round(results.filter(r => r.leaked).reduce((sum, r) => sum + r.confidence, 0) / Math.max(breachedCount, 1))
     : 0
 
-  // Calculate radar chart data
-  const categoryScores = [
-    { category: 'system_prompt', score: 100 - (results.filter(r => r.payload.category === 'system_prompt_leak' && r.leaked).length * 25), maxScore: 100, vulnerabilities: results.filter(r => r.payload.category === 'system_prompt_leak' && r.leaked).length },
-    { category: 'jailbreak', score: 100 - (results.filter(r => r.payload.category === 'jailbreak' && r.leaked).length * 25), maxScore: 100, vulnerabilities: results.filter(r => r.payload.category === 'jailbreak' && r.leaked).length },
-    { category: 'format_injection', score: 100 - (results.filter(r => r.payload.category === 'format_injection' && r.leaked).length * 25), maxScore: 100, vulnerabilities: results.filter(r => r.payload.category === 'format_injection' && r.leaked).length },
-    { category: 'translation_bypass', score: 100 - (results.filter(r => r.payload.category === 'translation_bypass' && r.leaked).length * 25), maxScore: 100, vulnerabilities: results.filter(r => r.payload.category === 'translation_bypass' && r.leaked).length },
-    { category: 'context_manipulation', score: 85, maxScore: 100, vulnerabilities: 0 },
-    { category: 'encoding_bypass', score: 78, maxScore: 100, vulnerabilities: 0 },
+  // Calculate radar chart data from 5 OWASP Agentic categories
+  const radarCategories = [
+    { key: 'system_prompt_leak', label: 'system_prompt' },
+    { key: 'jailbreak', label: 'jailbreak' },
+    { key: 'format_injection', label: 'format_injection' },
+    { key: 'supply_chain', label: 'supply_chain' },
+    { key: 'trust_manipulation', label: 'trust_manipulation' },
   ]
+  const categoryScores = radarCategories.map(({ key, label }) => {
+    const catResults = results.filter(r => r.payload.category === key)
+    const leaked = catResults.filter(r => r.leaked).length
+    return {
+      category: label,
+      score: catResults.length === 0 ? 100 : Math.max(0, 100 - leaked * 25),
+      maxScore: 100,
+      vulnerabilities: leaked,
+    }
+  })
 
   // DNA badge data
   const vulnerabilityData = [

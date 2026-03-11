@@ -43,7 +43,7 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
     onStartAttack({
       endpoint: endpoint.trim(),
       authHeader: authHeader.trim() || undefined,
-      payloadCount: 5
+      payloadCount: 8
     })
   }
 

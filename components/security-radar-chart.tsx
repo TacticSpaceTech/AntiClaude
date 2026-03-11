@@ -21,11 +21,10 @@ interface SecurityRadarChartProps {
 // Category translations
 const categoryNames: Record<string, Record<string, string>> = {
   'system_prompt': { zh: '提示词泄露', en: 'Prompt Leak' },
-  'jailbreak': { zh: '越狱攻击', en: 'Jailbreak' },
-  'format_injection': { zh: '格式注入', en: 'Format Injection' },
-  'translation_bypass': { zh: '翻译绕过', en: 'Translation Bypass' },
-  'context_manipulation': { zh: '上下文操纵', en: 'Context Hijack' },
-  'encoding_bypass': { zh: '编码绕过', en: 'Encoding Bypass' },
+  'jailbreak': { zh: '目标劫持', en: 'Goal Hijack' },
+  'format_injection': { zh: '工具滥用', en: 'Tool Abuse' },
+  'supply_chain': { zh: '供应链', en: 'Supply Chain' },
+  'trust_manipulation': { zh: '信任操纵', en: 'Trust Exploit' },
 }
 
 export function SecurityRadarChart({ 
