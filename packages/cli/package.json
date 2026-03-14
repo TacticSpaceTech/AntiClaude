@@ -6,12 +6,21 @@
     "anticlaude": "./dist/index.js"
   },
   "main": "dist/index.js",
+  "license": "MIT",
+  "author": "AntiClaude",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MJYKIM99/AntiClaude",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/MJYKIM99/AntiClaude",
+  "engines": { "node": ">=18" },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@anticlaude/engine": "file:../engine",
+    "@anticlaude/engine": "workspace:*",
     "commander": "^13.1.0",
     "chalk": "^4.1.2",
     "ora": "^5.4.1"
