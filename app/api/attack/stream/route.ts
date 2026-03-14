@@ -130,8 +130,19 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const hostname = parsedUrl.hostname.toLowerCase()
-  const blockedHostnames = ['localhost', '0.0.0.0', '::1']
+  // Strip IPv6 brackets for consistent matching: [::1] → ::1
+  const rawHostname = parsedUrl.hostname.toLowerCase()
+  const hostname = rawHostname.startsWith('[') && rawHostname.endsWith(']')
+    ? rawHostname.slice(1, -1)
+    : rawHostname
+
+  const blockedHostnames = [
+    'localhost',
+    '0.0.0.0',
+    '::1',
+    '0:0:0:0:0:0:0:1',
+    '0000:0000:0000:0000:0000:0000:0000:0001',
+  ]
   const privateIPPatterns = [
     /^127\./,
     /^10\./,
@@ -139,6 +150,8 @@ export async function POST(request: NextRequest) {
     /^192\.168\./,
     /^169\.254\./,
     /^fc[0-9a-f]{2}:/i,
+    /^fd[0-9a-f]{2}:/i,
+    /^fe80:/i,
   ]
 
   if (
