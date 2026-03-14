@@ -36,3 +36,7 @@ for (const category of CATEGORIES) {
 
 fs.writeFileSync(OUTPUT_FILE, JSON.stringify(payloads, null, 2), 'utf-8')
 console.log(`Built ${payloads.length} payloads → ${OUTPUT_FILE}`)
+
+const ENGINE_OUTPUT = path.resolve(__dirname, '..', 'packages', 'engine', 'src', 'payloads.json')
+fs.writeFileSync(ENGINE_OUTPUT, JSON.stringify(payloads, null, 2), 'utf-8')
+console.log(`Written ${payloads.length} payloads to ${ENGINE_OUTPUT}`)

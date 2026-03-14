@@ -2,8 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as yaml from 'js-yaml'
 import type { PayloadDefinition, OwaspCategory } from './types'
-
-const PAYLOAD_DIR_NAME = 'payloads'
+import bundledManifest from './payloads.json'
 
 const OWASP_CATEGORIES: OwaspCategory[] = [
   'ASI01-agent-goal-hijack',
@@ -13,20 +12,7 @@ const OWASP_CATEGORIES: OwaspCategory[] = [
   'ASI08-human-agent-trust',
 ]
 
-function findPayloadRoot(startDir?: string): string {
-  let dir = startDir || process.cwd()
-  for (let i = 0; i < 10; i++) {
-    const candidate = path.join(dir, PAYLOAD_DIR_NAME)
-    if (fs.existsSync(candidate)) return candidate
-    const parent = path.dirname(dir)
-    if (parent === dir) break
-    dir = parent
-  }
-  throw new Error(`Cannot find '${PAYLOAD_DIR_NAME}/' directory. Run from the AntiClaude project root.`)
-}
-
-export function loadPayloads(payloadDir?: string): PayloadDefinition[] {
-  const root = payloadDir || findPayloadRoot()
+function loadFromYaml(root: string): PayloadDefinition[] {
   const payloads: PayloadDefinition[] = []
 
   for (const category of OWASP_CATEGORIES) {
@@ -48,6 +34,13 @@ export function loadPayloads(payloadDir?: string): PayloadDefinition[] {
   }
 
   return payloads
+}
+
+export function loadPayloads(payloadDir?: string): PayloadDefinition[] {
+  if (payloadDir) {
+    return loadFromYaml(payloadDir)
+  }
+  return loadPayloadsFromJson(bundledManifest as PayloadDefinition[])
 }
 
 export function loadPayloadsByCategory(category: OwaspCategory, payloadDir?: string): PayloadDefinition[] {
