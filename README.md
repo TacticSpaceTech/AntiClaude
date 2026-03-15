@@ -22,12 +22,15 @@ npx anticlaude scan --endpoint https://your-agent.com/api/chat
 Options:
 
 ```
---auth <header>     Authorization header (e.g. "Bearer sk-...")
---count <n>         Number of payloads to test (default: 12)
---variants <n>      Max variant attempts per payload (default: 2)
---timeout <ms>      Request timeout in ms (default: 15000)
---output <format>   Report format: json | markdown | html (default: markdown)
---out <file>        Write report to file
+--auth <header>       Authorization header (e.g. "Bearer sk-...")
+--count <n>           Number of payloads to test (default: 12)
+--variants <n>        Max variant attempts per payload (default: 2)
+--timeout <ms>        Request timeout in ms (default: 15000)
+--output <format>     Report format: json | markdown | html (default: markdown)
+--out <file>          Write report to file
+--llm-judge <provider>  Enable LLM judge: openai or anthropic
+--llm-key <key>       API key for LLM judge
+--json-summary        Output machine-readable summary for CI
 ```
 
 ### Skill Audit
@@ -37,6 +40,22 @@ npx anticlaude audit --skill path/to/skill.yaml
 ```
 
 Static analysis of AI agent skill/tool definitions for description poisoning, parameter injection, permission scope issues, and more.
+
+### MCP Server Scan
+
+```bash
+npx anticlaude mcp-scan
+```
+
+Auto-discovers MCP server configs (`~/.cursor/mcp.json`, `~/.claude/claude_desktop_config.json`) and audits for credential exposure, command injection, dependency integrity, and more.
+
+### Security Badge
+
+```bash
+npx anticlaude badge --score 85
+```
+
+Generate a shields.io badge for your README after scanning.
 
 ### Web UI
 
@@ -56,11 +75,13 @@ Open [http://localhost:3000](http://localhost:3000) for the interactive scanner 
 |----|----------|----------|
 | ASI01 | Agent Goal Hijacking | 12 |
 | ASI02 | Tool Misuse & Injection | 12 |
-| ASI04 | Supply Chain Vulnerabilities | 10 |
+| ASI03 | Permission Abuse & Escalation | 8 |
+| ASI04 | Supply Chain Vulnerabilities | 8 |
+| ASI05 | Unsafe Code Execution | 8 |
 | ASI07 | System Prompt Leakage | 8 |
 | ASI08 | Human-Agent Trust Manipulation | 8 |
 
-48 YAML-based attack payloads with 8 adaptive strategies: direct, encoding, roleplay, multilingual, nested, semantic, continuation, and fragmented.
+64 YAML-based attack payloads covering 7/10 OWASP Agentic Top 10 categories, with 8 adaptive strategies: direct, encoding, roleplay, multilingual, nested, semantic, continuation, and fragmented.
 
 ## Project Structure
 
@@ -70,7 +91,7 @@ AntiClaude/
 │   ├── engine/          @anticlaude/engine — core scanning engine
 │   └── cli/             anticlaude — CLI tool
 ├── app/                 Next.js web UI
-├── payloads/            48 YAML attack payloads
+├── payloads/            64 YAML attack payloads (7 OWASP categories)
 ├── components/          React components
 └── lib/                 Shared utilities
 ```
