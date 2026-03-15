@@ -11,7 +11,8 @@
     "build:cli": "pnpm --filter anticlaude run build",
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint",
-    "test": "pnpm -r run test"
+    "test": "pnpm -r run test",
+    "validate:payloads": "node scripts/validate-payloads.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
