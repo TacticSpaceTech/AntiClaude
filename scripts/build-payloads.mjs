@@ -13,7 +13,9 @@ const OUTPUT_FILE = path.resolve(__dirname, '..', 'lib', 'payload-manifest.json'
 const CATEGORIES = [
   'ASI01-agent-goal-hijack',
   'ASI02-tool-abuse',
+  'ASI03-permission-abuse',
   'ASI04-supply-chain',
+  'ASI05-code-execution',
   'ASI07-system-prompt-leak',
   'ASI08-human-agent-trust',
 ]

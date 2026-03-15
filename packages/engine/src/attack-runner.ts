@@ -266,7 +266,9 @@ async function sendPayload(
 const OWASP_LABELS: Record<OwaspCategory, string> = {
   'ASI01-agent-goal-hijack': 'Agent Goal Hijacking',
   'ASI02-tool-abuse': 'Tool Misuse & Injection',
+  'ASI03-permission-abuse': 'Permission Abuse & Escalation',
   'ASI04-supply-chain': 'Supply Chain Vulnerabilities',
+  'ASI05-code-execution': 'Unsafe Code Execution',
   'ASI07-system-prompt-leak': 'System Prompt Leakage',
   'ASI08-human-agent-trust': 'Human-Agent Trust Manipulation',
 }

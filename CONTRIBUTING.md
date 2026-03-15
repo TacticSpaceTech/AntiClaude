@@ -51,7 +51,9 @@ remediation: >
 |----------|--------|---------|
 | ASI01 - Agent Goal Hijack | `agh` | `agh-013-new-attack.yaml` |
 | ASI02 - Tool Abuse | `ta` | `ta-013-new-attack.yaml` |
+| ASI03 - Permission Abuse | `pab` | `pab-009-new-attack.yaml` |
 | ASI04 - Supply Chain | `sc` | `sc-011-new-attack.yaml` |
+| ASI05 - Code Execution | `ce` | `ce-009-new-attack.yaml` |
 | ASI07 - System Prompt Leak | `spl` | `spl-009-new-attack.yaml` |
 | ASI08 - Human-Agent Trust | `hat` | `hat-009-new-attack.yaml` |
 

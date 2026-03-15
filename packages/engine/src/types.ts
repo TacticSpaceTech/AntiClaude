@@ -3,7 +3,9 @@
 export type OwaspCategory =
   | 'ASI01-agent-goal-hijack'
   | 'ASI02-tool-abuse'
+  | 'ASI03-permission-abuse'
   | 'ASI04-supply-chain'
+  | 'ASI05-code-execution'
   | 'ASI07-system-prompt-leak'
   | 'ASI08-human-agent-trust'
 

@@ -3,7 +3,9 @@ export const categoryMap: Record<string, string> = {
   'ASI07-system-prompt-leak': 'system_prompt_leak',
   'ASI01-agent-goal-hijack': 'jailbreak',
   'ASI02-tool-abuse': 'format_injection',
+  'ASI03-permission-abuse': 'permission_abuse',
   'ASI04-supply-chain': 'supply_chain',
+  'ASI05-code-execution': 'code_execution',
   'ASI08-human-agent-trust': 'trust_manipulation',
 }
 
@@ -12,7 +14,9 @@ export const categoryLabelMap: Record<string, string> = {
   'ASI07-system-prompt-leak': 'System Prompt Leak',
   'ASI01-agent-goal-hijack': 'Agent Goal Hijack',
   'ASI02-tool-abuse': 'Tool Abuse',
+  'ASI03-permission-abuse': 'Permission Abuse',
   'ASI04-supply-chain': 'Supply Chain',
+  'ASI05-code-execution': 'Code Execution',
   'ASI08-human-agent-trust': 'Trust Manipulation',
 }
 
