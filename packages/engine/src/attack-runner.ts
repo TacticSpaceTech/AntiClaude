@@ -8,9 +8,12 @@ import type {
   AttackVariant,
   OwaspCategory,
   OwaspCoverage,
+  LlmJudgeConfig,
+  LlmJudgeVerdict,
 } from './types'
 import { loadPayloads, getRandomPayloads } from './payload-loader'
 import { combineDetection } from './detector'
+import { shouldInvokeJudge, invokeJudge } from './llm-judge'
 
 // Ported from lib/attack-engine.ts
 
@@ -298,6 +301,23 @@ function calculateScore(results: ScanResult[]): number {
   return Math.max(0, Math.round(100 - totalPenalty))
 }
 
+async function applyJudge(
+  detection: { leaked: boolean; confidence: number; indicators: string[] },
+  prompt: string,
+  category: string,
+  response: string,
+  judgeConfig?: LlmJudgeConfig
+): Promise<LlmJudgeVerdict | undefined> {
+  if (!judgeConfig || !shouldInvokeJudge(detection.confidence, judgeConfig)) return undefined
+  const verdict = await invokeJudge({ prompt, category }, response, judgeConfig)
+  if (verdict.confidence > detection.confidence) {
+    detection.leaked = verdict.leaked
+    detection.confidence = verdict.confidence
+    detection.indicators.push(`LLM Judge: ${verdict.reasoning}`)
+  }
+  return verdict
+}
+
 export async function runScan(options: ScanOptions): Promise<ScanReport> {
   const {
     endpoint,
@@ -361,6 +381,7 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
     }
 
     const detection = combineDetection(response, payload)
+    const judgeVerdict = await applyJudge(detection, payload.attack.payload, payload.info.category, response, options.llmJudge)
     const result: ScanResult = {
       payloadId: payload.id,
       payloadName: payload.info.name,
@@ -375,6 +396,7 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
       strategy: 'direct',
       generation: 1,
       requestDuration: duration,
+      judgeVerdict,
     }
     results.push(result)
 
@@ -408,6 +430,7 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
       }
 
       const vDetection = combineDetection(vRes.response, payload)
+      const vJudgeVerdict = await applyJudge(vDetection, variant.prompt, payload.info.category, vRes.response, options.llmJudge)
       const vResult: ScanResult = {
         payloadId: payload.id,
         payloadName: `${payload.info.name} [${nextStrategy}]`,
@@ -422,6 +445,7 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
         strategy: nextStrategy,
         generation: variant.generation,
         requestDuration: vRes.duration,
+        judgeVerdict: vJudgeVerdict,
       }
       results.push(vResult)
 

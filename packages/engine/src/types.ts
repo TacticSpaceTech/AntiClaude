@@ -63,6 +63,7 @@ export interface ScanResult {
   generation: number
   requestDuration: number
   error?: string
+  judgeVerdict?: LlmJudgeVerdict
 }
 
 export interface OwaspCoverage {
@@ -118,6 +119,7 @@ export interface ScanOptions {
   maxVariants?: number
   timeout?: number
   onProgress?: (progress: ScanProgress) => void
+  llmJudge?: LlmJudgeConfig
 }
 
 // Skill Auditor types
@@ -152,4 +154,58 @@ export interface SkillAuditResult {
   findings: SkillFinding[]
   score: number
   hash?: string
+}
+
+// LLM Judge types
+
+export type LlmJudgeProvider = 'openai' | 'anthropic'
+
+export interface LlmJudgeConfig {
+  provider: LlmJudgeProvider
+  apiKey: string
+  model?: string
+  confidenceRange?: [number, number]
+  timeout?: number
+}
+
+export interface LlmJudgeVerdict {
+  leaked: boolean
+  confidence: number
+  reasoning: string
+}
+
+// MCP Scanner types
+
+export type McpAuditDimension =
+  | 'credential-exposure'
+  | 'command-injection'
+  | 'dependency-integrity'
+  | 'permission-escalation'
+  | 'tool-description-poisoning'
+  | 'source-validation'
+
+export interface McpServerConfig {
+  name: string
+  command: string
+  args?: string[]
+  env?: Record<string, string>
+  enabled?: boolean
+  url?: string
+  configPath: string
+}
+
+export interface McpFinding {
+  dimension: McpAuditDimension
+  severity: Severity
+  serverName: string
+  message: string
+  evidence?: string
+  recommendation: string
+}
+
+export interface McpScanResult {
+  servers: McpServerConfig[]
+  findings: McpFinding[]
+  score: number
+  configPaths: string[]
 }
