@@ -104,6 +104,14 @@ interface AttackRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const contentLength = parseInt(request.headers.get('content-length') || '0', 10)
+  if (contentLength > 10240) {
+    return new Response(JSON.stringify({ error: 'Request body too large' }), {
+      status: 413,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
   const body: AttackRequest = await request.json()
 
   if (!body.endpoint) {
@@ -164,8 +172,28 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  // Block raw IP addresses to mitigate DNS rebinding (Edge runtime has no dns.resolve)
+  const isIPv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)
+  const isIPv6 = hostname.includes(':')
+  if (isIPv4 || isIPv6) {
+    return new Response(JSON.stringify({ error: 'Raw IP addresses are not allowed. Use a hostname.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  // Port whitelist
+  const port = parsedUrl.port ? parseInt(parsedUrl.port, 10) : (parsedUrl.protocol === 'https:' ? 443 : 80)
+  if (![80, 443, 8080, 8443, 3000].includes(port)) {
+    return new Response(JSON.stringify({ error: 'Port not allowed' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
   const encoder = new TextEncoder()
-  const payloads = getRandomPayloads(body.payloadCount || 8)
+  const payloadCount = Math.min(Math.max(1, body.payloadCount || 8), 50)
+  const payloads = getRandomPayloads(payloadCount)
   const maxVariants = 2
 
   const stream = new ReadableStream({
