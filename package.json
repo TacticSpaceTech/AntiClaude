@@ -10,7 +10,7 @@
     "build:engine": "pnpm --filter @anticlaude/engine run build",
     "build:cli": "pnpm --filter anticlaude run build",
     "start": "next start -p ${PORT:-3000}",
-    "lint": "next lint",
+    "lint": "next lint .",
     "test": "pnpm -r run test",
     "validate:payloads": "node scripts/validate-payloads.mjs"
   },
