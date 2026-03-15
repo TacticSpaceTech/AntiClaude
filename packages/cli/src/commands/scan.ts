@@ -3,7 +3,8 @@ import chalk from 'chalk'
 import ora from 'ora'
 import * as fs from 'fs'
 import { runScan, reportToJson, reportToMarkdown, reportToHtml } from '@anticlaude/engine'
-import type { ScanProgress, ScanReport } from '@anticlaude/engine'
+import { generateBadgeUrl } from './badge'
+import type { ScanProgress, ScanReport, LlmJudgeConfig, LlmJudgeProvider } from '@anticlaude/engine'
 
 function parseIntOption(value: string, name: string): number {
   const n = parseInt(value, 10)
@@ -39,6 +40,10 @@ export const scanCommand = new Command('scan')
   .option('--timeout <ms>', 'Request timeout in ms', '15000')
   .option('--output <format>', 'Output format: json, markdown, html', 'markdown')
   .option('--out <file>', 'Write report to file')
+  .option('--llm-judge <provider>', 'Enable LLM judge: openai or anthropic')
+  .option('--llm-key <key>', 'API key for LLM judge (or set ANTICLAUDE_LLM_KEY)')
+  .option('--llm-model <model>', 'Model override for LLM judge')
+  .option('--json-summary', 'Output machine-readable summary line for CI')
   .action(async (opts) => {
     console.log('')
     console.log(chalk.green.bold('  ╔═══════════════════════════════════╗'))
@@ -79,6 +84,9 @@ export const scanCommand = new Command('scan')
             if (r.indicators.length > 0) {
               console.log(chalk.dim(`    Indicators: ${r.indicators.join(', ')}`))
             }
+            if (r.judgeVerdict) {
+              console.log(chalk.magenta(`    Judge: ${r.judgeVerdict.reasoning}`))
+            }
           } else if (r.error) {
             console.log(
               chalk.yellow('  ⚠ ERROR ') +
@@ -108,6 +116,22 @@ export const scanCommand = new Command('scan')
     }
 
     try {
+      let llmJudge: LlmJudgeConfig | undefined
+      if (opts.llmJudge) {
+        const provider = opts.llmJudge as LlmJudgeProvider
+        const apiKey = opts.llmKey
+          || process.env.ANTICLAUDE_LLM_KEY
+          || (provider === 'openai' ? process.env.OPENAI_API_KEY : process.env.ANTHROPIC_API_KEY)
+          || ''
+        if (!apiKey) {
+          console.error(chalk.red('Error: LLM judge requires an API key. Use --llm-key or set ANTICLAUDE_LLM_KEY.'))
+          process.exit(1)
+        }
+        llmJudge = { provider, apiKey, model: opts.llmModel }
+        console.log(chalk.dim(`  LLM Judge: ${provider} (${llmJudge.model || 'default model'})`))
+        console.log('')
+      }
+
       const report = await runScan({
         endpoint: opts.endpoint,
         authHeader: opts.auth,
@@ -115,12 +139,17 @@ export const scanCommand = new Command('scan')
         maxVariants: parseIntOption(opts.variants, 'variants'),
         timeout: parseIntOption(opts.timeout, 'timeout'),
         onProgress,
+        llmJudge,
       })
 
       printSummary(report)
 
       if (opts.out) {
         writeReport(report, opts.output, opts.out)
+      }
+
+      if (opts.jsonSummary) {
+        console.log(`ANTICLAUDE_SUMMARY=${JSON.stringify({ score: report.score, breaches: report.summary.breaches })}`)
       }
     } catch (err) {
       spinner.fail(chalk.red(`Scan failed: ${err instanceof Error ? err.message : err}`))
@@ -151,6 +180,10 @@ function printSummary(report: ScanReport) {
     const barStr = bar.repeat(Math.round(c.score / 5)) + chalk.dim('░').repeat(20 - Math.round(c.score / 5))
     console.log(`  ${barStr} ${c.score}% ${chalk.dim(c.label)}`)
   }
+  console.log('')
+
+  const badgeUrl = generateBadgeUrl(report.score)
+  console.log(chalk.dim(`  Badge: ![AntiClaude Security](${badgeUrl})`))
   console.log('')
 }
 

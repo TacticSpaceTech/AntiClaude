@@ -1,0 +1,149 @@
+name: 'AntiClaude Security Scan'
+description: 'Red-team your AI agent endpoint for prompt injection and OWASP Agentic Top 10 vulnerabilities'
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  endpoint:
+    description: 'Target AI agent API endpoint URL'
+    required: true
+  auth:
+    description: 'Authorization header value'
+    required: false
+  count:
+    description: 'Number of payloads to test'
+    required: false
+    default: '12'
+  variants:
+    description: 'Max variants per payload'
+    required: false
+    default: '2'
+  timeout:
+    description: 'Request timeout in ms'
+    required: false
+    default: '15000'
+  output-format:
+    description: 'Report format: json, markdown, html'
+    required: false
+    default: 'markdown'
+  fail-threshold:
+    description: 'Minimum score to pass (0-100). Action fails if score is below this.'
+    required: false
+    default: '70'
+  llm-judge:
+    description: 'LLM judge provider (openai or anthropic). Optional.'
+    required: false
+  llm-key:
+    description: 'API key for LLM judge'
+    required: false
+  comment-on-pr:
+    description: 'Post scan summary as PR comment (true/false)'
+    required: false
+    default: 'true'
+
+outputs:
+  score:
+    description: 'Security score (0-100)'
+    value: ${{ steps.parse.outputs.score }}
+  breaches:
+    description: 'Number of breaches found'
+    value: ${{ steps.parse.outputs.breaches }}
+  report-path:
+    description: 'Path to the generated report file'
+    value: ${{ steps.scan.outputs.report_path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: ${{ github.action_path }}/../pnpm-lock.yaml
+
+    - name: Install and build
+      shell: bash
+      working-directory: ${{ github.action_path }}/..
+      run: |
+        pnpm install --frozen-lockfile
+        pnpm run build:payloads
+        pnpm run build:engine
+        pnpm run build:cli
+
+    - name: Run scan
+      id: scan
+      shell: bash
+      working-directory: ${{ github.action_path }}/..
+      env:
+        ANTICLAUDE_LLM_KEY: ${{ inputs.llm-key }}
+      run: |
+        EXT="md"
+        if [ "${{ inputs.output-format }}" = "json" ]; then EXT="json"; fi
+        if [ "${{ inputs.output-format }}" = "html" ]; then EXT="html"; fi
+        REPORT_PATH="${{ runner.temp }}/anticlaude-report.${EXT}"
+
+        ARGS="--endpoint ${{ inputs.endpoint }} --count ${{ inputs.count }} --variants ${{ inputs.variants }} --timeout ${{ inputs.timeout }} --output ${{ inputs.output-format }} --out ${REPORT_PATH} --json-summary"
+
+        if [ -n "${{ inputs.auth }}" ]; then
+          ARGS="${ARGS} --auth '${{ inputs.auth }}'"
+        fi
+        if [ -n "${{ inputs.llm-judge }}" ]; then
+          ARGS="${ARGS} --llm-judge ${{ inputs.llm-judge }}"
+        fi
+
+        node packages/cli/dist/index.js scan ${ARGS} 2>&1 | tee /tmp/anticlaude-output.txt || true
+
+        echo "report_path=${REPORT_PATH}" >> $GITHUB_OUTPUT
+
+    - name: Parse results
+      id: parse
+      shell: bash
+      run: |
+        SUMMARY=$(grep 'ANTICLAUDE_SUMMARY=' /tmp/anticlaude-output.txt | tail -1 | cut -d= -f2-)
+        if [ -n "${SUMMARY}" ]; then
+          SCORE=$(echo "${SUMMARY}" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).score))")
+          BREACHES=$(echo "${SUMMARY}" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).breaches))")
+        else
+          SCORE="0"
+          BREACHES="0"
+        fi
+        echo "score=${SCORE}" >> $GITHUB_OUTPUT
+        echo "breaches=${BREACHES}" >> $GITHUB_OUTPUT
+
+    - name: Post PR comment
+      if: inputs.comment-on-pr == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        SCORE="${{ steps.parse.outputs.score }}"
+        BREACHES="${{ steps.parse.outputs.breaches }}"
+
+        if [ "${SCORE}" -ge 80 ]; then ICON="pass"; else ICON="fail"; fi
+
+        BODY="## AntiClaude Security Scan
+
+        **Score:** ${SCORE}/100 | **Breaches:** ${BREACHES}
+
+        <details><summary>Full Report</summary>
+
+        $(cat ${{ steps.scan.outputs.report_path }} 2>/dev/null || echo 'Report not available')
+
+        </details>"
+
+        gh pr comment ${{ github.event.pull_request.number }} --body "${BODY}"
+
+    - name: Check threshold
+      shell: bash
+      run: |
+        SCORE="${{ steps.parse.outputs.score }}"
+        THRESHOLD="${{ inputs.fail-threshold }}"
+        if [ "${SCORE}" -lt "${THRESHOLD}" ]; then
+          echo "::error::AntiClaude score ${SCORE} is below threshold ${THRESHOLD}"
+          exit 1
+        fi

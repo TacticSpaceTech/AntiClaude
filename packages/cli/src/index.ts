@@ -3,6 +3,8 @@
 import { Command } from 'commander'
 import { scanCommand } from './commands/scan'
 import { auditCommand } from './commands/audit'
+import { mcpScanCommand } from './commands/mcp-scan'
+import { badgeCommand } from './commands/badge'
 
 const program = new Command()
 
@@ -13,5 +15,7 @@ program
 
 program.addCommand(scanCommand)
 program.addCommand(auditCommand)
+program.addCommand(mcpScanCommand)
+program.addCommand(badgeCommand)
 
 program.parse()
