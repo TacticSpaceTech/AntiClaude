@@ -1,0 +1,38 @@
+{
+  "name": "@anticlaude/engine",
+  "version": "1.0.0",
+  "description": "AntiClaude core security scanning engine",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "AGPL-3.0-only",
+  "author": "AntiClaude",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TacticSpaceTech/AntiClaude",
+    "directory": "packages/engine"
+  },
+  "homepage": "https://github.com/TacticSpaceTech/AntiClaude",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc && cp src/payloads.json dist/payloads.json",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.4.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.4"
+  },
+  "files": [
+    "dist"
+  ]
+}

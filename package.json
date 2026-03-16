@@ -1,0 +1,17 @@
+{
+  "name": "anticlaude-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.10.0",
+  "scripts": {
+    "build:payloads": "node scripts/build-payloads.mjs",
+    "build:engine": "pnpm --filter @anticlaude/engine run build",
+    "build:cli": "pnpm --filter anticlaude run build",
+    "build": "pnpm run build:payloads && pnpm run build:engine && pnpm run build:cli",
+    "test": "pnpm -r run test",
+    "validate:payloads": "node scripts/validate-payloads.mjs"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.1"
+  }
+}
