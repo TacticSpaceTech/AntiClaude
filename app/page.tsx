@@ -9,11 +9,6 @@ import { AttackTerminal, type TerminalLine } from '@/components/attack-terminal'
 import { AIBattleTerminal, type BattleLine } from '@/components/ai-battle-terminal'
 import { SecurityReport, type AttackResult } from '@/components/security-report'
 import { EmailCaptureModal } from '@/components/email-capture-modal'
-import { FeaturesSection } from '@/components/features-section'
-import { HowItWorksSection } from '@/components/how-it-works-section'
-import { AboutSection } from '@/components/about-section'
-import { AttackVectorsSection } from '@/components/attack-vectors-section'
-import { FAQSection } from '@/components/faq-section'
 import { CTASection } from '@/components/cta-section'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { calculateSecurityScore } from '@/lib/payloads'
@@ -305,20 +300,20 @@ function HomeContent() {
             
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-8">
-              <button 
-                onClick={scrollToTest}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <button onClick={scrollToTest} className="text-sm font-mono text-muted-foreground hover:text-primary transition-colors">
                 {t('nav.startTest')}
               </button>
-              <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <a href="/features" className="text-sm font-mono text-muted-foreground hover:text-primary transition-colors">
                 {t('nav.features')}
               </a>
-              <a href="#about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {t('nav.about')}
+              <a href="/docs" className="text-sm font-mono text-muted-foreground hover:text-primary transition-colors">
+                {t('nav.docs')}
               </a>
-              <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {t('nav.faq')}
+              <a href="/blog" className="text-sm font-mono text-muted-foreground hover:text-primary transition-colors">
+                {t('nav.blog')}
+              </a>
+              <a href="/about" className="text-sm font-mono text-muted-foreground hover:text-primary transition-colors">
+                {t('nav.about')}
               </a>
             </nav>
             
@@ -355,20 +350,23 @@ function HomeContent() {
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden border-t border-border bg-background py-4 px-6 space-y-4">
-              <button 
+              <button
                 onClick={scrollToTest}
-                className="block w-full text-left text-sm text-muted-foreground hover:text-foreground"
+                className="block w-full text-left text-sm font-mono text-muted-foreground hover:text-primary"
               >
                 {t('nav.startTest')}
               </button>
-              <a href="#features" className="block text-sm text-muted-foreground hover:text-foreground">
+              <a href="/features" className="block text-sm font-mono text-muted-foreground hover:text-primary">
                 {t('nav.features')}
               </a>
-              <a href="#about" className="block text-sm text-muted-foreground hover:text-foreground">
-                {t('nav.about')}
+              <a href="/docs" className="block text-sm font-mono text-muted-foreground hover:text-primary">
+                {t('nav.docs')}
               </a>
-              <a href="#faq" className="block text-sm text-muted-foreground hover:text-foreground">
-                {t('nav.faq')}
+              <a href="/blog" className="block text-sm font-mono text-muted-foreground hover:text-primary">
+                {t('nav.blog')}
+              </a>
+              <a href="/about" className="block text-sm font-mono text-muted-foreground hover:text-primary">
+                {t('nav.about')}
               </a>
               <button 
                 onClick={scrollToTest}
@@ -469,27 +467,6 @@ function HomeContent() {
           </div>
         </section>
 
-        {/* Features Section */}
-        <div id="features">
-          <FeaturesSection />
-        </div>
-
-        {/* How It Works */}
-        <HowItWorksSection />
-
-        {/* About Section */}
-        <div id="about">
-          <AboutSection />
-        </div>
-
-        {/* Attack Vectors */}
-        <AttackVectorsSection />
-
-        {/* FAQ Section */}
-        <div id="faq">
-          <FAQSection />
-        </div>
-
         {/* CTA Section */}
         <CTASection onStartTest={scrollToTest} />
 
@@ -513,8 +490,8 @@ function HomeContent() {
                 <h4 className="font-mono text-primary/70 mb-4 text-sm">{'// '}{t('footer.product')}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground font-mono">
                   <li><button onClick={scrollToTest} className="hover:text-primary transition-colors">{t('footer.scan')}</button></li>
-                  <li><a href="https://github.com/TacticSpaceTech/AntiClaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.cicd')}</a></li>
-                  <li><a href="https://github.com/TacticSpaceTech/AntiClaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.enterprise')}</a></li>
+                  <li><a href="/cicd" className="hover:text-primary transition-colors">{t('footer.cicd')}</a></li>
+                  <li><a href="/enterprise" className="hover:text-primary transition-colors">{t('footer.enterprise')}</a></li>
                 </ul>
               </div>
               
