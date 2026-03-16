@@ -4,23 +4,14 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'AntiClaude - AI Security Red Teaming Platform',
-  description: 'npm-native AI Agent security red team tool. 48 payloads, 5 OWASP Agentic categories. Scan via Web or npx anticlaude scan.',
+  description: 'Open-source AI Agent security red team tool. 64 payloads across 7 OWASP Agentic categories. Scan via Web or npx anticlaude scan.',
   icons: {
     icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
+      { url: '/favicon.ico', sizes: '48x48' },
+      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/apple-icon.png',
+    apple: { url: '/apple-icon.png', sizes: '180x180' },
   },
 }
 

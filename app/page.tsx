@@ -298,11 +298,9 @@ function HomeContent() {
         {/* Header */}
         <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(0,255,65,0.4)]">
-                <span className="text-primary-foreground font-bold text-sm font-mono">A</span>
-              </div>
-              <span className="font-semibold text-primary text-lg font-mono drop-shadow-[0_0_10px_rgba(0,255,65,0.3)]">AntiClaude</span>
+            <div className="flex items-center gap-2.5">
+              <img src="/icon-192x192.png" alt="AntiClaude" className="w-8 h-8 rounded" />
+              <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
             </div>
             
             {/* Desktop Nav */}
