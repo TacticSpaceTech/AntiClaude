@@ -54,7 +54,7 @@ export function AboutSection() {
             className={`space-y-6 ${rightVisible ? 'animate-in fade-in slide-in-from-right-4 duration-500' : 'opacity-0'}`}
           >
             {/* Mission Card */}
-            <div className="p-6 rounded-lg bg-black/40 backdrop-blur-sm border border-primary/20">
+            <div className="p-6 rounded-lg bg-card/80 backdrop-blur-sm border border-border">
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <h3 className="text-lg font-semibold text-foreground font-mono">
@@ -70,13 +70,13 @@ export function AboutSection() {
             <div className="grid grid-cols-2 gap-4">
               {[
                 { value: '87%', label: t('about.stat1') },
-                { value: '5', label: t('about.stat2') },
+                { value: '7', label: t('about.stat2') },
                 { value: '30s', label: t('about.stat3') },
                 { value: '100%', label: t('about.stat4') },
               ].map((stat, index) => (
                 <div
                   key={index}
-                  className="p-5 rounded-lg bg-black/40 backdrop-blur-sm border border-primary/20 text-center group hover:border-primary/40 transition-all"
+                  className="p-5 rounded-lg bg-card/80 backdrop-blur-sm border border-border text-center group hover:border-primary/40 transition-all"
                 >
                   <p className="text-3xl font-bold text-primary font-mono mb-1 drop-shadow-[0_0_10px_rgba(0,255,65,0.3)] group-hover:drop-shadow-[0_0_15px_rgba(0,255,65,0.5)] transition-all">
                     {stat.value}

@@ -327,7 +327,7 @@ function HomeContent() {
             <div className="hidden md:flex items-center gap-3">
               <LanguageSwitcher />
               <a 
-                href="https://github.com/MJYKIM99/AntiClaude" 
+                href="https://github.com/TacticSpaceTech/AntiClaude" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -517,8 +517,8 @@ function HomeContent() {
                 <h4 className="font-mono text-primary/70 mb-4 text-sm">{'// '}{t('footer.product')}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground font-mono">
                   <li><button onClick={scrollToTest} className="hover:text-primary transition-colors">{t('footer.scan')}</button></li>
-                  <li><a href="https://github.com/MJYKIM99/AntiClaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.cicd')}</a></li>
-                  <li><a href="https://github.com/MJYKIM99/AntiClaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.enterprise')}</a></li>
+                  <li><a href="https://github.com/TacticSpaceTech/AntiClaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.cicd')}</a></li>
+                  <li><a href="https://github.com/TacticSpaceTech/AntiClaude/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer.enterprise')}</a></li>
                 </ul>
               </div>
               
@@ -527,7 +527,7 @@ function HomeContent() {
                 <ul className="space-y-2 text-sm text-muted-foreground font-mono">
                   <li><a href="#" className="hover:text-primary transition-colors">{t('nav.docs')}</a></li>
                   <li><a href="#" className="hover:text-primary transition-colors">{t('nav.blog')}</a></li>
-                  <li><a href="https://github.com/MJYKIM99/AntiClaude" className="hover:text-primary transition-colors">GitHub</a></li>
+                  <li><a href="https://github.com/TacticSpaceTech/AntiClaude" className="hover:text-primary transition-colors">GitHub</a></li>
                 </ul>
               </div>
             </div>

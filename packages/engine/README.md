@@ -24,4 +24,4 @@ const report = await runScan({
 console.log(`Score: ${report.score}/100`)
 ```
 
-See the [main repository](https://github.com/MJYKIM99/AntiClaude) for full documentation.
+See the [main repository](https://github.com/TacticSpaceTech/AntiClaude) for full documentation.

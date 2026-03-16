@@ -2,7 +2,7 @@
 
 **Red-team your AI agents from the terminal.**
 
-[![CI](https://github.com/MJYKIM99/AntiClaude/actions/workflows/ci.yml/badge.svg)](https://github.com/MJYKIM99/AntiClaude/actions/workflows/ci.yml)
+[![CI](https://github.com/TacticSpaceTech/AntiClaude/actions/workflows/ci.yml/badge.svg)](https://github.com/TacticSpaceTech/AntiClaude/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/anticlaude)](https://www.npmjs.com/package/anticlaude)
 [![npm](https://img.shields.io/npm/v/@anticlaude/engine)](https://www.npmjs.com/package/@anticlaude/engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -60,7 +60,7 @@ Generate a shields.io badge for your README after scanning.
 ### Web UI
 
 ```bash
-git clone https://github.com/MJYKIM99/AntiClaude.git
+git clone https://github.com/TacticSpaceTech/AntiClaude.git
 cd AntiClaude
 pnpm install
 pnpm run build:payloads

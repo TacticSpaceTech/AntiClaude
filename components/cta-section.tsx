@@ -46,7 +46,7 @@ export function CTASection({ onStartTest }: CTASectionProps) {
             {t('cta.button')}
           </button>
           <a
-            href="https://github.com/anthropics/anticlaude"
+            href="https://github.com/TacticSpaceTech/AntiClaude"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-4 border border-primary/30 text-primary/70 font-mono rounded-lg hover:border-primary/60 hover:text-primary transition-all text-sm"

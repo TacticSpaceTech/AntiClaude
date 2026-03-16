@@ -77,7 +77,7 @@ export function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={feature.titleKey}
-              className={`group p-6 rounded-lg bg-black/40 backdrop-blur-sm border border-primary/20 hover:border-primary/40 transition-all hover:shadow-[0_0_20px_rgba(0,255,65,0.1)] ${visible ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both' : 'opacity-0'}`}
+              className={`group p-6 rounded-lg bg-card/80 backdrop-blur-sm border border-border hover:border-primary/40 transition-all hover:shadow-sm ${visible ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both' : 'opacity-0'}`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:border-primary/40 transition-all group-hover:shadow-[0_0_15px_rgba(0,255,65,0.2)]">

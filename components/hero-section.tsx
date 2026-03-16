@@ -148,8 +148,8 @@ export function HeroSection({ onScrollToScan }: HeroSectionProps) {
       {/* Stats with Matrix styling */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-6">
         {[
-          { value: '48', label: t('hero.stat1') },
-          { value: '5', label: t('hero.stat2') },
+          { value: '64', label: t('hero.stat1') },
+          { value: '7', label: t('hero.stat2') },
           { value: '<30s', label: t('hero.stat3') },
           { value: t('hero.stat4Value'), label: t('hero.stat4') },
         ].map((stat, index) => (
@@ -158,7 +158,7 @@ export function HeroSection({ onScrollToScan }: HeroSectionProps) {
             className="relative p-4 rounded border border-primary/20 bg-black/40 backdrop-blur-sm group hover:border-primary/50 transition-all duration-300"
           >
             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded" />
-            <p className="text-2xl md:text-3xl font-bold text-primary font-mono drop-shadow-[0_0_10px_rgba(0,255,65,0.3)]">
+            <p className="text-2xl md:text-3xl font-bold text-primary font-mono">
               {stat.value}
             </p>
             <p className="text-xs text-muted-foreground mt-1 font-mono">{stat.label}</p>
@@ -171,14 +171,14 @@ export function HeroSection({ onScrollToScan }: HeroSectionProps) {
         <button
           onClick={onScrollToScan}
           className="px-8 py-3 bg-primary text-primary-foreground font-mono font-bold rounded-lg
-                     shadow-[0_0_30px_rgba(0,255,65,0.4)] hover:shadow-[0_0_45px_rgba(0,255,65,0.6)]
+                     shadow-lg hover:shadow-xl
                      hover:bg-primary/90 transition-all duration-300 flex items-center gap-2"
         >
           <Zap className="w-4 h-4" />
           {t('hero.ctaButton')}
         </button>
         <a
-          href="https://github.com/anthropics/anticlaude"
+          href="https://github.com/TacticSpaceTech/AntiClaude"
           target="_blank"
           rel="noopener noreferrer"
           className="px-6 py-3 border border-primary/30 text-primary/70 font-mono rounded-lg

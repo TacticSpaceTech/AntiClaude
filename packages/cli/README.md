@@ -15,4 +15,4 @@ CLI for AI agent security testing.
 npx anticlaude scan --endpoint https://your-agent.com/api/chat
 ```
 
-See the [main repository](https://github.com/MJYKIM99/AntiClaude) for full documentation.
+See the [main repository](https://github.com/TacticSpaceTech/AntiClaude) for full documentation.

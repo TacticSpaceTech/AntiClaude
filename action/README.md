@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: MJYKIM99/AntiClaude/action@v1
+      - uses: TacticSpaceTech/AntiClaude/action@v1
         with:
           endpoint: ${{ secrets.AGENT_ENDPOINT }}
           auth: 'Bearer ${{ secrets.AGENT_TOKEN }}'
