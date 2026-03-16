@@ -112,8 +112,8 @@ function HomeContent() {
     addLine(t('terminal.initializing'), 'system')
     
     // AI Battle initialization
-    addBattleLine('system', locale === 'zh' ? '初始化 AI 对抗系统...' : 'Initializing AI Battle System...', { thinking: locale === 'zh' ? '加载攻击模块' : 'Loading attack modules' })
-    addBattleLine('attacker', locale === 'zh' ? '目标锁定: ' + config.endpoint : 'Target acquired: ' + config.endpoint, { thinking: locale === 'zh' ? '分析目标架构...' : 'Analyzing target architecture...' })
+    addBattleLine('system', t('battle.init'), { thinking: locale === 'zh' ? '加载攻击模块' : 'Loading attack modules' })
+    addBattleLine('attacker', locale === 'zh' ? '目标锁定: ' + config.endpoint : 'Target acquired: ' + config.endpoint, { thinking: t('battle.analyzing') })
 
     try {
       const response = await fetch('/api/attack/stream', {
@@ -171,7 +171,7 @@ function HomeContent() {
             const strategy = data.result?.strategy || 'direct'
             setCurrentStrategy(strategy)
             addBattleLine('attacker', `[${data.payload.severity.toUpperCase()}] ${data.payload.name}`, {
-              thinking: locale === 'zh' ? '选择攻击策略: ' + strategy : 'Selecting strategy: ' + strategy,
+              thinking: t('battle.selectStrategy') + strategy,
               isStreaming: true
             })
           }
@@ -180,7 +180,7 @@ function HomeContent() {
             const strategy = data.strategy as string
             setCurrentStrategy(strategy)
             addLine(`Strategy: ${strategy} → ${data.payloadName}`, 'info')
-            addBattleLine('attacker', locale === 'zh' ? `切换策略: ${strategy}` : `Switching strategy: ${strategy}`, {
+            addBattleLine('attacker', t('battle.switchStrategy') + strategy, {
               thinking: locale === 'zh' ? '调整攻击角度...' : 'Adjusting attack vector...',
               isStreaming: true
             })
@@ -207,8 +207,8 @@ function HomeContent() {
 
               // AI Battle: Successful breach
               setDefenderStatus('vulnerable')
-              addBattleLine('defender', locale === 'zh' ? '防线被突破!' : 'Defense breached!', { confidence: 100 - result.confidence })
-              addBattleLine('result', `[LEAK] ${locale === 'zh' ? '置信度' : 'Confidence'}: ${result.confidence}%`, { confidence: result.confidence })
+              addBattleLine('defender', t('battle.breached'), { confidence: 100 - result.confidence })
+              addBattleLine('result', `[LEAK] ${t('battle.confidence')}: ${result.confidence}%`, { confidence: result.confidence })
             } else if (result.error) {
               addLine(`API Error: ${result.error}`, 'warning')
             } else {
@@ -216,8 +216,8 @@ function HomeContent() {
 
               // AI Battle: Blocked
               setDefenderStatus('blocking')
-              addBattleLine('defender', locale === 'zh' ? '攻击已拦截' : 'Attack blocked', { confidence: 100 })
-              addBattleLine('result', `[SAFE] ${locale === 'zh' ? '防护有效' : 'Defense held'}`)
+              addBattleLine('defender', t('battle.blocked'), { confidence: 100 })
+              addBattleLine('result', `[SAFE] ${t('battle.defenseHeld')}`)
             }
 
             // Reset defender status after a short delay
@@ -403,7 +403,7 @@ function HomeContent() {
                         onClick={handleStopAttack}
                         className="px-3 py-1 text-xs font-mono text-danger border border-danger/30 rounded hover:bg-danger/10 transition-colors"
                       >
-                        {locale === 'zh' ? '停止扫描' : 'Stop Scan'}
+                        {t('scan.stop')}
                       </button>
                     </div>
                   )}
@@ -424,7 +424,7 @@ function HomeContent() {
                     <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                    {locale === 'zh' ? '查看详细日志' : 'View detailed logs'}
+                    {t('scan.viewLogs')}
                   </summary>
                   <div className="mt-4">
                     <AttackTerminal 
@@ -464,6 +464,42 @@ function HomeContent() {
                 />
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Why AntiClaude */}
+        <section className="py-20 border-t border-border">
+          <div className="max-w-5xl mx-auto px-6">
+            <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider text-center">{'// '}{t('home.whyTitle')}</p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mt-8">
+              {[
+                { icon: '>', title: t('home.whyNpm'), desc: t('home.whyNpmDesc') },
+                { icon: '64', title: t('home.whyPayloads'), desc: t('home.whyPayloadsDesc') },
+                { icon: 'AI', title: t('home.whyJudge'), desc: t('home.whyJudgeDesc') },
+                { icon: 'CI', title: t('home.whyCi'), desc: t('home.whyCiDesc') },
+              ].map((item, i) => (
+                <div key={i} className="p-5 rounded-lg bg-card/80 border border-border hover:border-primary/40 transition-all">
+                  <span className="text-primary font-mono font-bold text-lg">{item.icon}</span>
+                  <h3 className="font-mono font-semibold text-foreground mt-3 mb-2 text-sm">{item.title}</h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Quick Install */}
+        <section className="py-16 border-t border-border">
+          <div className="max-w-2xl mx-auto px-6 text-center">
+            <div className="p-4 rounded-lg bg-card/80 border border-border font-mono text-sm">
+              <span className="text-muted-foreground">$ </span>
+              <span className="text-primary">npx anticlaude scan --endpoint https://your-agent.com/api/chat</span>
+            </div>
+            <div className="flex items-center justify-center gap-6 mt-6 text-xs font-mono text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary/60" />OWASP Aligned</span>
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary/60" />AGPL-3.0</span>
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-primary/60" />npm v1.0.0</span>
+            </div>
           </div>
         </section>
 

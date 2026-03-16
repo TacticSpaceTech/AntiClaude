@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { SubPageHeader } from '@/components/sub-page-header'
 import { posts } from '@/content/blog/posts'
 
 export const metadata: Metadata = {
@@ -14,17 +15,7 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <img src="/icon-192x192.png" alt="AntiClaude" className="w-8 h-8 rounded" />
-            <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
-          </Link>
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono">
-            &larr; Home
-          </Link>
-        </div>
-      </header>
+      <SubPageHeader active="/blog" />
 
       <main className="max-w-4xl mx-auto px-6 py-12 pb-24">
         <div className="mb-12">

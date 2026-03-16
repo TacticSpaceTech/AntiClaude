@@ -1,17 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { SubPageHeader } from '@/components/sub-page-header'
 
 export const metadata: Metadata = {
   title: 'Enterprise - AntiClaude',
   description: 'Enterprise-grade AI agent security: team collaboration, compliance reporting, CI/CD integration, and priority support.',
 }
-
-const navLinks = [
-  { href: '/#features', label: 'Features' },
-  { href: '/docs', label: 'Docs' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/about', label: 'About' },
-]
 
 const tiers = [
   {
@@ -80,25 +74,7 @@ const enterpriseReasons = [
 export default function EnterprisePage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <img src="/icon-192x192.png" alt="AntiClaude" className="w-8 h-8 rounded" />
-            <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
-          </Link>
-          <nav className="flex items-center gap-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-mono text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </header>
+      <SubPageHeader active="/enterprise" />
 
       <main>
         {/* Hero */}

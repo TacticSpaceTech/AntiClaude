@@ -177,7 +177,29 @@ const translations: Record<Locale, Record<string, string>> = {
     'footer.privacy': '隐私政策',
     'footer.terms': '服务条款',
     'footer.contact': '联系我们',
-    'footer.rights': 'All rights reserved.'
+    'footer.rights': 'All rights reserved.',
+    // Battle
+    'battle.init': '初始化 AI 对抗系统...',
+    'battle.analyzing': '分析目标架构...',
+    'battle.selectStrategy': '选择攻击策略: ',
+    'battle.switchStrategy': '切换策略: ',
+    'battle.breached': '防线被突破!',
+    'battle.confidence': '置信度',
+    'battle.blocked': '攻击已拦截',
+    'battle.defenseHeld': '防护有效',
+    // Scan
+    'scan.stop': '停止扫描',
+    'scan.viewLogs': '查看详细日志',
+    // Home
+    'home.whyTitle': '为什么选择 AntiClaude',
+    'home.whyNpm': '一行命令开始',
+    'home.whyNpmDesc': 'npx anticlaude scan，无需安装、注册或配置',
+    'home.whyPayloads': '64 个攻击载荷',
+    'home.whyPayloadsDesc': '覆盖 7 个 OWASP Agentic 分类，自适应变体策略',
+    'home.whyJudge': 'LLM 语义检测',
+    'home.whyJudgeDesc': '可选接入 OpenAI/Anthropic API，提升复杂攻击检测准确率',
+    'home.whyCi': 'CI/CD 就绪',
+    'home.whyCiDesc': 'GitHub Action 一行接入，PR 自动评论，分数阈值控制'
   },
   en: {
     // Navigation
@@ -333,7 +355,29 @@ const translations: Record<Locale, Record<string, string>> = {
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Service',
     'footer.contact': 'Contact Us',
-    'footer.rights': 'All rights reserved.'
+    'footer.rights': 'All rights reserved.',
+    // Battle
+    'battle.init': 'Initializing AI Battle System...',
+    'battle.analyzing': 'Analyzing target architecture...',
+    'battle.selectStrategy': 'Selecting strategy: ',
+    'battle.switchStrategy': 'Switching strategy: ',
+    'battle.breached': 'Defense breached!',
+    'battle.confidence': 'Confidence',
+    'battle.blocked': 'Attack blocked',
+    'battle.defenseHeld': 'Defense held',
+    // Scan
+    'scan.stop': 'Stop Scan',
+    'scan.viewLogs': 'View detailed logs',
+    // Home
+    'home.whyTitle': 'Why AntiClaude',
+    'home.whyNpm': 'One command to start',
+    'home.whyNpmDesc': 'npx anticlaude scan — no install, signup, or config needed',
+    'home.whyPayloads': '64 Attack Payloads',
+    'home.whyPayloadsDesc': 'Covering 7 OWASP Agentic categories with adaptive variant strategies',
+    'home.whyJudge': 'LLM Semantic Detection',
+    'home.whyJudgeDesc': 'Optional OpenAI/Anthropic API for higher accuracy on subtle attacks',
+    'home.whyCi': 'CI/CD Ready',
+    'home.whyCiDesc': 'GitHub Action one-line setup, PR auto-comments, score thresholds'
   },
   ja: {
     // Navigation
@@ -489,7 +533,29 @@ const translations: Record<Locale, Record<string, string>> = {
     'footer.privacy': 'プライバシーポリシー',
     'footer.terms': '利用規約',
     'footer.contact': 'お問い合わせ',
-    'footer.rights': 'All rights reserved.'
+    'footer.rights': 'All rights reserved.',
+    // Battle
+    'battle.init': 'AIバトルシステム初期化中...',
+    'battle.analyzing': 'ターゲットアーキテクチャ分析中...',
+    'battle.selectStrategy': '戦略選択: ',
+    'battle.switchStrategy': '戦略切替: ',
+    'battle.breached': '防御突破！',
+    'battle.confidence': '信頼度',
+    'battle.blocked': '攻撃ブロック',
+    'battle.defenseHeld': '防御有効',
+    // Scan
+    'scan.stop': 'スキャン停止',
+    'scan.viewLogs': '詳細ログを表示',
+    // Home
+    'home.whyTitle': 'AntiClaudeを選ぶ理由',
+    'home.whyNpm': 'コマンド一つで開始',
+    'home.whyNpmDesc': 'npx anticlaude scan — インストール、登録、設定不要',
+    'home.whyPayloads': '64の攻撃ペイロード',
+    'home.whyPayloadsDesc': '7つのOWASP Agentic分類をカバー、適応型バリアント戦略',
+    'home.whyJudge': 'LLMセマンティック検出',
+    'home.whyJudgeDesc': 'OpenAI/Anthropic API対応で高精度検出',
+    'home.whyCi': 'CI/CD対応',
+    'home.whyCiDesc': 'GitHub Action一行設定、PR自動コメント、スコア閾値'
   },
   ko: {
     // Navigation
@@ -645,7 +711,29 @@ const translations: Record<Locale, Record<string, string>> = {
     'footer.privacy': '개인정보 처리방침',
     'footer.terms': '서비스 약관',
     'footer.contact': '문의하기',
-    'footer.rights': 'All rights reserved.'
+    'footer.rights': 'All rights reserved.',
+    // Battle
+    'battle.init': 'AI 배틀 시스템 초기화 중...',
+    'battle.analyzing': '대상 아키텍처 분석 중...',
+    'battle.selectStrategy': '전략 선택: ',
+    'battle.switchStrategy': '전략 전환: ',
+    'battle.breached': '방어선 돌파!',
+    'battle.confidence': '신뢰도',
+    'battle.blocked': '공격 차단',
+    'battle.defenseHeld': '방어 유지',
+    // Scan
+    'scan.stop': '스캔 중지',
+    'scan.viewLogs': '상세 로그 보기',
+    // Home
+    'home.whyTitle': 'AntiClaude를 선택하는 이유',
+    'home.whyNpm': '명령어 하나로 시작',
+    'home.whyNpmDesc': 'npx anticlaude scan — 설치, 가입, 설정 불필요',
+    'home.whyPayloads': '64개 공격 페이로드',
+    'home.whyPayloadsDesc': '7개 OWASP Agentic 분류 커버, 적응형 변형 전략',
+    'home.whyJudge': 'LLM 시맨틱 탐지',
+    'home.whyJudgeDesc': 'OpenAI/Anthropic API로 정밀 탐지 가능',
+    'home.whyCi': 'CI/CD 지원',
+    'home.whyCiDesc': 'GitHub Action 한 줄 설정, PR 자동 코멘트, 점수 임계값'
   },
   es: {
     // Navigation
@@ -801,7 +889,29 @@ const translations: Record<Locale, Record<string, string>> = {
     'footer.privacy': 'Política de Privacidad',
     'footer.terms': 'Términos de Servicio',
     'footer.contact': 'Contáctanos',
-    'footer.rights': 'Todos los derechos reservados.'
+    'footer.rights': 'Todos los derechos reservados.',
+    // Battle
+    'battle.init': 'Inicializando Sistema de Batalla AI...',
+    'battle.analyzing': 'Analizando arquitectura objetivo...',
+    'battle.selectStrategy': 'Seleccionando estrategia: ',
+    'battle.switchStrategy': 'Cambiando estrategia: ',
+    'battle.breached': 'Defensa vulnerada!',
+    'battle.confidence': 'Confianza',
+    'battle.blocked': 'Ataque bloqueado',
+    'battle.defenseHeld': 'Defensa mantenida',
+    // Scan
+    'scan.stop': 'Detener Escaneo',
+    'scan.viewLogs': 'Ver registros detallados',
+    // Home
+    'home.whyTitle': 'Por qué AntiClaude',
+    'home.whyNpm': 'Un comando para empezar',
+    'home.whyNpmDesc': 'npx anticlaude scan — sin instalación, registro ni configuración',
+    'home.whyPayloads': '64 Payloads de Ataque',
+    'home.whyPayloadsDesc': 'Cubriendo 7 categorías OWASP Agentic con estrategias adaptativas',
+    'home.whyJudge': 'Detección Semántica LLM',
+    'home.whyJudgeDesc': 'API OpenAI/Anthropic opcional para mayor precisión',
+    'home.whyCi': 'Listo para CI/CD',
+    'home.whyCiDesc': 'GitHub Action en una línea, comentarios automáticos en PR, umbrales de puntuación'
   }
 }
 

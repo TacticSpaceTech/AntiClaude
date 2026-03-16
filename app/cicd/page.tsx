@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { SubPageHeader } from '@/components/sub-page-header'
 
 export const metadata: Metadata = {
   title: 'CI/CD Integration — AntiClaude',
@@ -63,20 +63,7 @@ function OptionsTable({ headers, rows }: { headers: string[]; rows: string[][] }
 export default function CicdPage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-background/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <img src="/icon-192x192.png" alt="AntiClaude" className="w-8 h-8 rounded" />
-            <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
-          </Link>
-          <nav className="flex items-center gap-6 text-sm font-mono text-muted-foreground">
-            <Link href="/features" className="hover:text-primary transition-colors">Features</Link>
-            <Link href="/docs" className="hover:text-primary transition-colors">Docs</Link>
-            <Link href="/blog" className="hover:text-primary transition-colors">Blog</Link>
-            <Link href="/cicd" className="text-primary">CI/CD</Link>
-          </nav>
-        </div>
-      </header>
+      <SubPageHeader active="/cicd" />
 
       <main className="max-w-4xl mx-auto px-6 py-12 pb-24">
         <div className="mb-8">

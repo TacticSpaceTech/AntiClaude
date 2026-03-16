@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { SubPageHeader } from '@/components/sub-page-header'
 import { I18nWrapper } from '@/components/i18n-wrapper'
 import { AboutSection } from '@/components/about-section'
 import { FAQSection } from '@/components/faq-section'
@@ -9,39 +9,10 @@ export const metadata: Metadata = {
   description: 'Learn about AntiClaude: open-source AI agent security testing, our mission, team, and project stats.',
 }
 
-const navLinks = [
-  { href: '/#features', label: 'Features' },
-  { href: '/docs', label: 'Docs' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/about', label: 'About', active: true },
-]
-
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <img src="/icon-192x192.png" alt="AntiClaude" className="w-8 h-8 rounded" />
-            <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
-          </Link>
-          <nav className="flex items-center gap-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-sm font-mono transition-colors ${
-                  link.active
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </header>
+      <SubPageHeader active="/about" />
 
       <main>
         {/* Hero */}

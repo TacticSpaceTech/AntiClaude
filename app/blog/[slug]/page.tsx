@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { SubPageHeader } from '@/components/sub-page-header'
 import { notFound } from 'next/navigation'
 import { posts } from '@/content/blog/posts'
 
@@ -29,19 +30,23 @@ export default async function BlogPostPage({ params }: Props) {
     notFound()
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    datePublished: post.date,
+    author: { '@type': 'Organization', name: 'TacticSpaceTech' },
+    publisher: { '@type': 'Organization', name: 'AntiClaude' },
+    description: post.description,
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-primary/20 bg-background/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <img src="/icon-192x192.png" alt="AntiClaude" className="w-8 h-8 rounded" />
-            <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
-          </Link>
-          <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono">
-            &larr; Blog
-          </Link>
-        </div>
-      </header>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <SubPageHeader active="/blog" />
 
       <main className="max-w-3xl mx-auto px-6 py-12 pb-24">
         <article>
