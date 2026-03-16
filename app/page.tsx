@@ -499,10 +499,8 @@ function HomeContent() {
             <div className="grid md:grid-cols-4 gap-8 mb-12">
               {/* Brand */}
               <div className="md:col-span-2">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_10px_rgba(0,255,65,0.3)]">
-                    <span className="text-primary-foreground font-bold text-sm font-mono">A</span>
-                  </div>
+                <div className="flex items-center gap-2.5 mb-4">
+                  <img src="/icon-192x192.png" alt="AntiClaude" className="w-8 h-8 rounded" />
                   <span className="font-semibold text-primary text-lg font-mono">AntiClaude</span>
                 </div>
                 <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
@@ -523,8 +521,8 @@ function HomeContent() {
               <div>
                 <h4 className="font-mono text-primary/70 mb-4 text-sm">{'// '}{t('footer.resources')}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground font-mono">
-                  <li><a href="#" className="hover:text-primary transition-colors">{t('nav.docs')}</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">{t('nav.blog')}</a></li>
+                  <li><a href="/docs" className="hover:text-primary transition-colors">{t('nav.docs')}</a></li>
+                  <li><a href="/blog" className="hover:text-primary transition-colors">{t('nav.blog')}</a></li>
                   <li><a href="https://github.com/TacticSpaceTech/AntiClaude" className="hover:text-primary transition-colors">GitHub</a></li>
                 </ul>
               </div>
@@ -535,9 +533,9 @@ function HomeContent() {
                 {'// '}2026 AntiClaude. {t('footer.rights')}
               </p>
               <div className="flex items-center gap-6 text-xs text-muted-foreground font-mono">
-                <a href="#" className="hover:text-primary transition-colors">{t('footer.privacy')}</a>
-                <a href="#" className="hover:text-primary transition-colors">{t('footer.terms')}</a>
-                <a href="#" className="hover:text-primary transition-colors">{t('footer.contact')}</a>
+                <a href="/privacy" className="hover:text-primary transition-colors">{t('footer.privacy')}</a>
+                <a href="/terms" className="hover:text-primary transition-colors">{t('footer.terms')}</a>
+                <a href="/contact" className="hover:text-primary transition-colors">{t('footer.contact')}</a>
               </div>
             </div>
           </div>
