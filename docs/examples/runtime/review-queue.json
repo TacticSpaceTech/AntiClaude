@@ -1,0 +1,72 @@
+[
+  {
+    "reviewVersion": 1,
+    "id": "review_example_export_1",
+    "requestId": "req_runtime_export",
+    "traceId": "trace_runtime_export",
+    "agentId": "support-agent",
+    "toolCall": {
+      "name": "export_customer_data",
+      "arguments": {
+        "customerId": "cus_123",
+        "destination": "external@example.com",
+        "fields": ["email", "billing_history"]
+      }
+    },
+    "policyDecision": {
+      "action": "review",
+      "policyId": "runtime.tool.export_customer_data.destination.review",
+      "agentId": "support-agent",
+      "agentName": "Reference Support Agent",
+      "toolName": "export_customer_data",
+      "toolActionType": "export",
+      "riskLevel": "critical",
+      "reason": "Tool export_customer_data targets a sensitive or external destination.",
+      "matchedEvidence": ["destination:external@example.com", "pattern:@"],
+      "recommendedAction": "Route to human review and verify authorization before execution.",
+      "evaluatedAt": "2026-05-09T01:10:00.000Z"
+    },
+    "evidence": ["destination:external@example.com", "pattern:@"],
+    "status": "pending",
+    "createdAt": "2026-05-09T01:10:00.000Z",
+    "updatedAt": "2026-05-09T01:10:00.000Z",
+    "expiresAt": "2026-05-10T01:10:00.000Z"
+  },
+  {
+    "reviewVersion": 1,
+    "id": "review_example_export_2",
+    "requestId": "req_runtime_export_approved",
+    "traceId": "trace_runtime_export_approved",
+    "agentId": "support-agent",
+    "toolCall": {
+      "name": "export_customer_data",
+      "arguments": {
+        "customerId": "cus_456",
+        "destination": "https://internal-review.example/export/cus_456",
+        "fields": ["email"]
+      }
+    },
+    "policyDecision": {
+      "action": "review",
+      "policyId": "runtime.tool.export_customer_data.destination.review",
+      "agentId": "support-agent",
+      "agentName": "Reference Support Agent",
+      "toolName": "export_customer_data",
+      "toolActionType": "export",
+      "riskLevel": "critical",
+      "reason": "Tool export_customer_data targets a sensitive or external destination.",
+      "matchedEvidence": ["destination:https://internal-review.example/export/cus_456", "pattern:^https?://"],
+      "recommendedAction": "Route to human review and verify authorization before execution.",
+      "evaluatedAt": "2026-05-09T01:20:00.000Z"
+    },
+    "evidence": ["destination:https://internal-review.example/export/cus_456", "pattern:^https?://"],
+    "status": "approved",
+    "createdAt": "2026-05-09T01:20:00.000Z",
+    "updatedAt": "2026-05-09T01:24:00.000Z",
+    "decision": {
+      "reviewer": "local-operator",
+      "reason": "Internal destination and customer export request were verified.",
+      "decidedAt": "2026-05-09T01:24:00.000Z"
+    }
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "id": "runtime.support-agent.beta",
+  "name": "Support Agent Runtime Beta",
+  "version": "1",
+  "description": "Local runtime beta profile for support-agent tool governance.",
+  "env": "staging",
+  "defaultMode": "review",
+  "unknownToolMode": "block",
+  "agents": [
+    {
+      "id": "support-agent",
+      "name": "Reference Support Agent",
+      "description": "Local fixture for customer support workflows with CRM, billing, export, and email-like tools.",
+      "env": "staging",
+      "defaultMode": "review",
+      "tools": [
+        {
+          "name": "crm_lookup_order",
+          "description": "Read order and customer support metadata.",
+          "actionType": "read",
+          "riskLevel": "low",
+          "defaultMode": "allow"
+        },
+        {
+          "name": "billing_refund_customer",
+          "description": "Issue customer refunds.",
+          "actionType": "write",
+          "riskLevel": "high",
+          "defaultMode": "block",
+          "argumentConstraints": [
+            {
+              "path": "amount",
+              "operator": "regex",
+              "value": "^[0-9]+(\\.[0-9]{1,2})?$",
+              "mode": "block",
+              "reason": "Refund amount must be an explicit numeric value."
+            }
+          ]
+        },
+        {
+          "name": "export_customer_data",
+          "description": "Export customer records.",
+          "actionType": "export",
+          "riskLevel": "critical",
+          "defaultMode": "review",
+          "sensitiveDestinationPatterns": ["@", "^https?://"],
+          "sensitiveDestinationMode": "review"
+        },
+        {
+          "name": "send_customer_email",
+          "description": "Send customer-visible email.",
+          "actionType": "send",
+          "riskLevel": "high",
+          "defaultMode": "review",
+          "sensitiveDestinationPatterns": ["@external\\.example$", "@gmail\\.com$", "@yahoo\\.com$", "@outlook\\.com$"],
+          "sensitiveDestinationMode": "block"
+        },
+        {
+          "name": "admin_update_permissions",
+          "description": "Update support-agent or customer permissions.",
+          "actionType": "admin",
+          "riskLevel": "critical",
+          "defaultMode": "block"
+        }
+      ]
+    }
+  ]
+}

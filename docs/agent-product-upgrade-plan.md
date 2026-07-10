@@ -1,5 +1,7 @@
 # AntiClaude Agent AI Product Upgrade Plan
 
+Status note: this document is a forward-looking product plan. The currently shipped product is a local-first eval/audit/runtime-control beta made of the web scanner, `/control-plane` example inspection view, `@anticlaude/engine`, `anticlaude` CLI, payload library, deterministic eval suites, report comparison, MCP/skill auditors, GitHub Action gates, local Guard SDK/gateway, support-agent runtime policy, local review queue, local incident index, and JSONL audit replay. Hosted dashboards, billing, production runtime firewall deployment, and SOC 2/GDPR readiness are not shipped capabilities in the current repo.
+
 ## 1. Strategic Shift
 
 Current state:
@@ -230,7 +232,7 @@ Success criteria:
 
 ## 10. Recommended Positioning Statement
 
-AntiClaude helps teams secure tool-using AI agents by combining adversarial evaluation, runtime policy enforcement, and full audit trails.
+Future positioning after the runtime layers are implemented: AntiClaude helps teams secure tool-using AI agents by combining adversarial evaluation, runtime policy enforcement, and full audit trails.
 
 Short version:
 - Find risky behavior before launch

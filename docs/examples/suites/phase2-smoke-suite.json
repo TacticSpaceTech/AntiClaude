@@ -1,0 +1,12 @@
+{
+  "name": "Phase 2 Smoke Suite",
+  "description": "Small deterministic suite for local mock-agent verification.",
+  "seed": "phase2-smoke",
+  "payloadIds": ["spl-001", "pab-005"],
+  "count": 2,
+  "maxVariants": 0,
+  "expected": {
+    "minBreaches": 1,
+    "maxScore": 100
+  }
+}
