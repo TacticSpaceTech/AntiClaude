@@ -2,9 +2,9 @@ import { Command } from 'commander'
 import chalk from 'chalk'
 import ora from 'ora'
 import * as fs from 'fs'
-import { runScan, reportToJson, reportToMarkdown, reportToHtml } from '@anticlaude/engine'
+import { loadEvalSuite, runScan, reportToJson, reportToMarkdown, reportToHtml } from '@anticlaude/engine'
 import { generateBadgeUrl } from './badge'
-import type { ScanProgress, ScanReport, LlmJudgeConfig, LlmJudgeProvider } from '@anticlaude/engine'
+import type { ScanProgress, ScanReport, LlmJudgeConfig, LlmJudgeProvider, TargetAdapter } from '@anticlaude/engine'
 
 function parseIntOption(value: string, name: string): number {
   const n = parseInt(value, 10)
@@ -31,15 +31,31 @@ function scoreColor(score: number): string {
   return chalk.red.bold(`${score}/100`)
 }
 
+function parseAdapter(value: string): TargetAdapter {
+  const adapters: TargetAdapter[] = ['generic-json', 'openai-chat', 'anthropic-messages', 'custom-json']
+  if (!adapters.includes(value as TargetAdapter)) {
+    console.error(`Error: --adapter must be one of ${adapters.join(', ')}, got: "${value}"`)
+    process.exit(1)
+  }
+  return value as TargetAdapter
+}
+
 export const scanCommand = new Command('scan')
   .description('Scan an AI agent endpoint for vulnerabilities')
   .requiredOption('--endpoint <url>', 'Target API endpoint URL')
   .option('--auth <header>', 'Authorization header value')
+  .option('--adapter <type>', 'Target request adapter: generic-json, openai-chat, anthropic-messages, custom-json', 'generic-json')
+  .option('--body-field <name>', 'JSON field used by the generic-json adapter', 'message')
+  .option('--body-template <json>', 'Custom JSON request template. Use {{prompt}} inside a JSON string or {{promptJson}} as a JSON value.')
+  .option('--target-model <model>', 'Model field for OpenAI-compatible or Anthropic-compatible adapters')
+  .option('--max-tokens <number>', 'max_tokens for Anthropic-compatible requests', '1024')
+  .option('--suite <file>', 'Eval suite JSON file with deterministic payload selection')
   .option('--count <number>', 'Number of payloads to test', '12')
   .option('--variants <number>', 'Max variants per payload', '2')
   .option('--timeout <ms>', 'Request timeout in ms', '15000')
   .option('--output <format>', 'Output format: json, markdown, html', 'markdown')
   .option('--out <file>', 'Write report to file')
+  .option('--fail-threshold <score>', 'Exit 1 if score is below this threshold')
   .option('--llm-judge <provider>', 'Enable LLM judge: openai or anthropic')
   .option('--llm-key <key>', 'API key for LLM judge (or set ANTICLAUDE_LLM_KEY)')
   .option('--llm-model <model>', 'Model override for LLM judge')
@@ -132,12 +148,22 @@ export const scanCommand = new Command('scan')
         console.log('')
       }
 
+      const adapter = parseAdapter(opts.adapter)
+      const suite = opts.suite ? loadEvalSuite(opts.suite) : undefined
       const report = await runScan({
         endpoint: opts.endpoint,
-        authHeader: opts.auth,
+        target: {
+          adapter,
+          authHeader: opts.auth,
+          bodyField: opts.bodyField,
+          bodyTemplate: opts.bodyTemplate,
+          model: opts.targetModel,
+          maxTokens: adapter === 'anthropic-messages' ? parseIntOption(opts.maxTokens, 'max-tokens') : undefined,
+        },
         payloadCount: parseIntOption(opts.count, 'count'),
-        maxVariants: parseIntOption(opts.variants, 'variants'),
+        maxVariants: suite?.maxVariants ?? parseIntOption(opts.variants, 'variants'),
         timeout: parseIntOption(opts.timeout, 'timeout'),
+        suite,
         onProgress,
         llmJudge,
       })
@@ -149,7 +175,20 @@ export const scanCommand = new Command('scan')
       }
 
       if (opts.jsonSummary) {
-        console.log(`ANTICLAUDE_SUMMARY=${JSON.stringify({ score: report.score, breaches: report.summary.breaches })}`)
+        console.log(`ANTICLAUDE_SUMMARY=${JSON.stringify({
+          reportVersion: report.reportVersion,
+          score: report.score,
+          breaches: report.summary.breaches,
+          errors: report.summary.errors,
+        })}`)
+      }
+
+      if (opts.failThreshold !== undefined) {
+        const threshold = parseIntOption(opts.failThreshold, 'fail-threshold')
+        if (report.score < threshold) {
+          console.error(chalk.red(`AntiClaude score ${report.score} is below threshold ${threshold}`))
+          process.exit(1)
+        }
       }
     } catch (err) {
       spinner.fail(chalk.red(`Scan failed: ${err instanceof Error ? err.message : err}`))
