@@ -1,20 +1,29 @@
 {
   "name": "anticlaude-monorepo",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "packageManager": "pnpm@10.10.0",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/build-payloads.mjs && pnpm --filter @anticlaude/engine run build && next build",
     "build:payloads": "node scripts/build-payloads.mjs",
     "build:engine": "pnpm --filter @anticlaude/engine run build",
     "build:cli": "pnpm --filter anticlaude run build",
+    "build:packages": "pnpm run build:payloads && pnpm run build:engine && pnpm run build:cli",
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint .",
-    "test": "pnpm -r run test",
-    "validate:payloads": "node scripts/validate-payloads.mjs"
+    "typecheck": "pnpm --filter @anticlaude/engine run typecheck && pnpm --filter anticlaude run typecheck",
+    "test": "pnpm run test:action && pnpm -r run test",
+    "test:action": "node scripts/test-action-yml.mjs",
+    "validate:payloads": "node scripts/validate-payloads.mjs",
+    "ci": "pnpm run validate:payloads && pnpm run build:packages && pnpm run test"
   },
   "dependencies": {
+    "@anticlaude/engine": "workspace:*",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",

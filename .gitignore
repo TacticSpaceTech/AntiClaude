@@ -3,13 +3,48 @@ __v0_runtime_loader.js
 __v0_devtools.tsx
 __v0_jsx-dev-runtime.ts
 
-# Common ignores
+# Dependencies — pnpm only (do not commit package-lock.json)
 node_modules/
-.next/
-.env*.local
-.DS_Store
+.pnpm-store/
+package-lock.json
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Build outputs
+# Next.js / build
+.next/
+out/
+dist/
 packages/engine/dist/
 packages/cli/dist/
 tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Test / coverage
+coverage/
+.vitest/
+
+# Deploy / local tooling
+.vercel/
+.turbo/
+*.log
+tmp/
+temp/
+/tmp-anticlaude-*
+
+# Local runtime artifacts from demos
+*.review-store.jsonl
+traces/
+!docs/examples/traces/

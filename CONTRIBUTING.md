@@ -1,5 +1,20 @@
 # Contributing to AntiClaude
 
+## License
+
+By contributing, you agree that your contributions will be licensed under the
+[GNU Affero General Public License v3.0 only](LICENSE) (`AGPL-3.0-only`), the same
+license as the rest of this repository.
+
+## Development setup
+
+```bash
+pnpm install
+pnpm run ci
+```
+
+Use **pnpm** only. Do not commit `package-lock.json`. See [MAINTENANCE.md](MAINTENANCE.md).
+
 ## Contributing Payloads
 
 Payloads are the core of AntiClaude. Adding new attack payloads is the highest-impact contribution you can make.

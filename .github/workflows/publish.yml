@@ -8,6 +8,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       id-token: write
@@ -18,24 +19,26 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm run build:payloads
-      - run: pnpm run build:engine
-      - run: pnpm run build:cli
-      - run: pnpm run test
+      - name: Verify
+        run: pnpm run ci
+
+      - name: Build web (sanity)
+        run: pnpm run build
 
       # Engine must publish first (CLI depends on it)
       - name: Publish @anticlaude/engine
-        run: cd packages/engine && pnpm publish --no-git-checks
+        run: cd packages/engine && pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish anticlaude CLI
-        run: cd packages/cli && pnpm publish --no-git-checks
+        run: cd packages/cli && pnpm publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

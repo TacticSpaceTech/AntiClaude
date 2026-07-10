@@ -1,10 +1,10 @@
 {
   "name": "@anticlaude/engine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AntiClaude core security scanning engine",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": "AntiClaude",
   "repository": {
     "type": "git",
@@ -12,6 +12,9 @@
     "directory": "packages/engine"
   },
   "homepage": "https://github.com/TacticSpaceTech/AntiClaude",
+  "bugs": {
+    "url": "https://github.com/TacticSpaceTech/AntiClaude/issues"
+  },
   "engines": {
     "node": ">=18"
   },
@@ -21,6 +24,7 @@
   "scripts": {
     "build": "tsc && cp src/payloads.json dist/payloads.json",
     "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
