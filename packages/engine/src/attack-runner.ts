@@ -10,10 +10,19 @@ import type {
   OwaspCoverage,
   LlmJudgeConfig,
   LlmJudgeVerdict,
+  TargetRequestConfig,
+  TargetRequestEvidence,
 } from './types'
 import { loadPayloads, getRandomPayloads } from './payload-loader'
 import { combineDetection } from './detector'
 import { shouldInvokeJudge, invokeJudge } from './llm-judge'
+import { selectPayloadsForSuite, suiteMetadata, validateEvalSuite } from './eval-suite'
+import {
+  buildReproductionInfo,
+  buildTargetMetadata,
+  buildTargetRequest,
+  normalizeTargetConfig,
+} from './target-adapter'
 
 // Ported from lib/attack-engine.ts
 
@@ -224,40 +233,41 @@ export function extractResponseText(data: unknown): string {
 async function sendPayload(
   endpoint: string,
   prompt: string,
-  authHeader?: string,
+  target: Required<Pick<TargetRequestConfig, 'adapter'>> & TargetRequestConfig,
   timeout: number = 15000
-): Promise<{ response: string; duration: number; error?: string }> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (authHeader) headers['Authorization'] = authHeader
-
+): Promise<{ response: string; duration: number; request: TargetRequestEvidence; error?: string }> {
+  let request: TargetRequestEvidence | undefined
   const startTime = Date.now()
   try {
+    const targetRequest = buildTargetRequest(endpoint, prompt, target)
+    request = targetRequest.evidence
+
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers,
-      body: JSON.stringify({
-        message: prompt,
-        messages: [{ role: 'user', content: prompt }],
-        prompt,
-        input: prompt,
-        query: prompt,
-        text: prompt,
-      }),
+      headers: targetRequest.headers,
+      body: JSON.stringify(targetRequest.body),
       signal: AbortSignal.timeout(timeout),
     })
 
     const duration = Date.now() - startTime
 
     if (!res.ok) {
-      return { response: '', duration, error: `HTTP ${res.status}: ${res.statusText}` }
+      return { response: '', duration, request, error: `HTTP ${res.status}: ${res.statusText}` }
     }
 
     const data = await res.json()
-    return { response: extractResponseText(data), duration }
+    return { response: extractResponseText(data), duration, request }
   } catch (e) {
     return {
       response: '',
       duration: Date.now() - startTime,
+      request: request || {
+        method: 'POST',
+        url: endpoint,
+        adapter: target.adapter,
+        headers: { 'Content-Type': 'application/json' },
+        body: { prompt },
+      },
       error: e instanceof Error ? e.message : 'Unknown error'
     }
   }
@@ -331,7 +341,18 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
   } = options
 
   const allPayloads = loadPayloads()
-  const selected = getRandomPayloads(allPayloads, payloadCount)
+  if (options.suite) validateEvalSuite(options.suite)
+  const selected = options.suite
+    ? selectPayloadsForSuite(allPayloads, options.suite, payloadCount)
+    : getRandomPayloads(allPayloads, payloadCount)
+  const effectiveMaxVariants = options.suite?.maxVariants ?? maxVariants
+  const target = normalizeTargetConfig(endpoint, {
+    target: options.target,
+    authHeader,
+    timeout,
+    payloadCount: selected.length,
+    maxVariants: effectiveMaxVariants,
+  })
   const results: ScanResult[] = []
   const startTime = Date.now()
 
@@ -352,24 +373,30 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
     })
 
     // Direct attack
-    const { response, duration, error } = await sendPayload(endpoint, payload.attack.payload, authHeader, timeout)
+    const { response, duration, request, error } = await sendPayload(endpoint, payload.attack.payload, target, timeout)
 
     if (error) {
       results.push({
         payloadId: payload.id,
         payloadName: payload.info.name,
         category: payload.info.category,
+        owaspCategory: payload.info.category,
         severity: payload.info.severity,
         prompt: payload.attack.payload,
+        request,
         response: '',
         fullResponse: '',
         leaked: false,
+        status: 'error',
         confidence: 0,
+        confidenceSource: 'none',
         indicators: [],
         strategy: 'direct',
         generation: 1,
         requestDuration: duration,
+        remediation: payload.remediation,
         error,
+        errorState: error,
       })
 
       onProgress?.({
@@ -383,21 +410,27 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
     }
 
     const detection = combineDetection(response, payload)
+    const detectorConfidence = detection.confidence
     const judgeVerdict = await applyJudge(detection, payload.attack.payload, payload.info.category, response, options.llmJudge)
     const result: ScanResult = {
       payloadId: payload.id,
       payloadName: payload.info.name,
       category: payload.info.category,
+      owaspCategory: payload.info.category,
       severity: payload.info.severity,
       prompt: payload.attack.payload,
+      request,
       response: response.slice(0, 500) + (response.length > 500 ? '...' : ''),
       fullResponse: response,
       leaked: detection.leaked,
+      status: detection.leaked ? 'breached' : 'blocked',
       confidence: detection.confidence,
+      confidenceSource: judgeVerdict && detection.confidence > detectorConfidence ? 'llm-judge' : 'detector',
       indicators: detection.indicators,
       strategy: 'direct',
       generation: 1,
       requestDuration: duration,
+      remediation: payload.remediation,
       judgeVerdict,
     }
     results.push(result)
@@ -413,7 +446,7 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
       { strategy: 'direct', success: false }
     ]
 
-    for (let v = 0; v < maxVariants; v++) {
+    for (let v = 0; v < effectiveMaxVariants; v++) {
       const nextStrategy = selectNextStrategy(previousResults)
 
       onProgress?.({ type: 'strategy_selected', strategy: nextStrategy, payload })
@@ -423,30 +456,60 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
       if (strategyVariants.length === 0) break
 
       const variant = strategyVariants[0]
-      const vRes = await sendPayload(endpoint, variant.prompt, authHeader, timeout)
+      const vRes = await sendPayload(endpoint, variant.prompt, target, timeout)
 
       if (vRes.error) {
+        results.push({
+          payloadId: payload.id,
+          payloadName: `${payload.info.name} [${nextStrategy}]`,
+          category: payload.info.category,
+          owaspCategory: payload.info.category,
+          severity: payload.info.severity,
+          prompt: variant.prompt,
+          request: vRes.request,
+          response: '',
+          fullResponse: '',
+          leaked: false,
+          status: 'error',
+          confidence: 0,
+          confidenceSource: 'none',
+          indicators: [],
+          strategy: nextStrategy,
+          generation: variant.generation,
+          requestDuration: vRes.duration,
+          remediation: payload.remediation,
+          error: vRes.error,
+          errorState: vRes.error,
+        })
+        onProgress?.({ type: 'attack_result', payload, result: results[results.length - 1] })
+        onProgress?.({ type: 'error', message: vRes.error, payload })
         failedStrategies.push(nextStrategy)
         previousResults.push({ strategy: nextStrategy, success: false })
         continue
       }
 
       const vDetection = combineDetection(vRes.response, payload)
+      const vDetectorConfidence = vDetection.confidence
       const vJudgeVerdict = await applyJudge(vDetection, variant.prompt, payload.info.category, vRes.response, options.llmJudge)
       const vResult: ScanResult = {
         payloadId: payload.id,
         payloadName: `${payload.info.name} [${nextStrategy}]`,
         category: payload.info.category,
+        owaspCategory: payload.info.category,
         severity: payload.info.severity,
         prompt: variant.prompt,
+        request: vRes.request,
         response: vRes.response.slice(0, 500) + (vRes.response.length > 500 ? '...' : ''),
         fullResponse: vRes.response,
         leaked: vDetection.leaked,
+        status: vDetection.leaked ? 'breached' : 'blocked',
         confidence: vDetection.confidence,
+        confidenceSource: vJudgeVerdict && vDetection.confidence > vDetectorConfidence ? 'llm-judge' : 'detector',
         indicators: vDetection.indicators,
         strategy: nextStrategy,
         generation: variant.generation,
         requestDuration: vRes.duration,
+        remediation: payload.remediation,
         judgeVerdict: vJudgeVerdict,
       }
       results.push(vResult)
@@ -461,9 +524,16 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
   }
 
   const report: ScanReport = {
+    reportVersion: 1,
     id: `scan-${Date.now()}`,
     timestamp: new Date().toISOString(),
     targetEndpoint: endpoint,
+    target: buildTargetMetadata(endpoint, target, {
+      timeout,
+      payloadCount: selected.length,
+      maxVariants: effectiveMaxVariants,
+    }),
+    suite: suiteMetadata(options.suite),
     duration: Date.now() - startTime,
     results,
     score: calculateScore(results),
@@ -475,6 +545,11 @@ export async function runScan(options: ScanOptions): Promise<ScanReport> {
       blocked: results.filter(r => !r.leaked && !r.error).length,
       errors: results.filter(r => !!r.error).length,
     },
+    reproduction: buildReproductionInfo(endpoint, target, {
+      payloadCount: selected.length,
+      maxVariants: effectiveMaxVariants,
+      timeout,
+    }),
   }
 
   onProgress?.({ type: 'complete', report })

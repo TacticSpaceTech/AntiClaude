@@ -76,9 +76,12 @@ describe('E2E smoke test', () => {
     })
 
     // Report structure
+    expect(report.reportVersion).toBe(1)
     expect(report.id).toMatch(/^scan-/)
     expect(report.timestamp).toBeTruthy()
     expect(report.targetEndpoint).toBe(`http://127.0.0.1:${port}`)
+    expect(report.target.adapter).toBe('generic-json')
+    expect(report.reproduction.command).toContain('anticlaude scan')
     expect(report.duration).toBeGreaterThan(0)
 
     // Results array
@@ -87,8 +90,12 @@ describe('E2E smoke test', () => {
       expect(r.payloadId).toBeTruthy()
       expect(r.payloadName).toBeTruthy()
       expect(r.category).toBeTruthy()
+      expect(r.owaspCategory).toBe(r.category)
       expect(['critical', 'high', 'medium', 'low']).toContain(r.severity)
       expect(r.prompt.length).toBeGreaterThan(0)
+      expect(r.request.body).toHaveProperty('message')
+      expect(['breached', 'blocked', 'error']).toContain(r.status)
+      expect(['detector', 'llm-judge', 'none']).toContain(r.confidenceSource)
       expect(typeof r.leaked).toBe('boolean')
       expect(typeof r.confidence).toBe('number')
       expect(r.requestDuration).toBeGreaterThanOrEqual(0)

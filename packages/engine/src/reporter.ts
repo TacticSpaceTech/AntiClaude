@@ -22,6 +22,8 @@ export function reportToMarkdown(report: ScanReport): string {
   lines.push(`# AntiClaude Security Scan Report`)
   lines.push('')
   lines.push(`**Target:** ${report.targetEndpoint}`)
+  lines.push(`**Report Version:** ${report.reportVersion}`)
+  lines.push(`**Adapter:** ${report.target.adapter}`)
   lines.push(`**Date:** ${new Date(report.timestamp).toLocaleString()}`)
   lines.push(`**Duration:** ${(report.duration / 1000).toFixed(1)}s`)
   lines.push(`**Score:** ${report.score}/100`)
@@ -37,6 +39,17 @@ export function reportToMarkdown(report: ScanReport): string {
   lines.push(`| Breaches | ${report.summary.breaches} |`)
   lines.push(`| Blocked | ${report.summary.blocked} |`)
   lines.push(`| Errors | ${report.summary.errors} |`)
+  lines.push('')
+
+  lines.push(`## Reproduce`)
+  lines.push('')
+  lines.push('```bash')
+  lines.push(report.reproduction.command)
+  lines.push('```')
+  lines.push('')
+  lines.push('```json')
+  lines.push(JSON.stringify(report.reproduction.config, null, 2))
+  lines.push('```')
   lines.push('')
 
   // OWASP Coverage
@@ -61,12 +74,20 @@ export function reportToMarkdown(report: ScanReport): string {
       lines.push(`- **Category:** ${r.category}`)
       lines.push(`- **Severity:** ${r.severity.toUpperCase()}`)
       lines.push(`- **Confidence:** ${r.confidence}%`)
+      lines.push(`- **Confidence Source:** ${r.confidenceSource}`)
       lines.push(`- **Strategy:** ${r.strategy}`)
       lines.push(`- **Indicators:** ${r.indicators.join(', ')}`)
+      if (r.judgeVerdict) lines.push(`- **LLM Judge:** ${r.judgeVerdict.reasoning}`)
+      if (r.remediation) lines.push(`- **Remediation:** ${r.remediation.trim()}`)
       lines.push('')
       lines.push(`**Prompt:**`)
       lines.push('```')
-      lines.push(r.prompt.slice(0, 200))
+      lines.push(r.prompt)
+      lines.push('```')
+      lines.push('')
+      lines.push(`**Request Body:**`)
+      lines.push('```json')
+      lines.push(JSON.stringify(r.request.body, null, 2))
       lines.push('```')
       lines.push('')
       lines.push(`**Response (truncated):**`)
@@ -75,6 +96,16 @@ export function reportToMarkdown(report: ScanReport): string {
       lines.push('```')
       lines.push('')
     }
+  }
+
+  const errors = report.results.filter(r => r.error)
+  if (errors.length > 0) {
+    lines.push(`## Error States`)
+    lines.push('')
+    for (const r of errors) {
+      lines.push(`- **${r.payloadName}** (${r.strategy}) — ${r.error}`)
+    }
+    lines.push('')
   }
 
   // Passed
@@ -118,13 +149,15 @@ export function reportToHtml(report: ScanReport): string {
 </head>
 <body>
 <h1>AntiClaude Scan Report</h1>
-<p class="meta">Target: ${escapeHtml(report.targetEndpoint)} | ${new Date(report.timestamp).toLocaleString()} | ${(report.duration / 1000).toFixed(1)}s</p>
+<p class="meta">Target: ${escapeHtml(report.targetEndpoint)} | Adapter: ${escapeHtml(report.target.adapter)} | Report v${report.reportVersion} | ${new Date(report.timestamp).toLocaleString()} | ${(report.duration / 1000).toFixed(1)}s</p>
 <div class="score">${report.score}/100</div>
 <h2>Summary</h2>
 <table>
 <tr><th>Payloads</th><th>Attempts</th><th>Breaches</th><th>Blocked</th><th>Errors</th></tr>
 <tr><td>${report.summary.totalPayloads}</td><td>${report.summary.totalAttempts}</td><td>${report.summary.breaches}</td><td>${report.summary.blocked}</td><td>${report.summary.errors}</td></tr>
 </table>
+<h2>Reproduce</h2>
+<pre>${escapeHtml(report.reproduction.command)}</pre>
 <h2>OWASP Coverage</h2>
 <table>
 <tr><th>Category</th><th>Tested</th><th>Score</th></tr>
@@ -135,7 +168,10 @@ ${report.results.filter(r => r.leaked).length > 0 ? `
 ${report.results.filter(r => r.leaked).map(r => `
 <div style="border: 1px solid #333; padding: 1rem; margin: 0.5rem 0; border-radius: 4px;">
 <strong class="severity-${r.severity}">[${r.severity.toUpperCase()}]</strong> ${escapeHtml(r.payloadName)} — ${r.confidence}% confidence
+<p class="meta">Source: ${escapeHtml(r.confidenceSource)} | Strategy: ${escapeHtml(r.strategy)} | OWASP: ${escapeHtml(r.owaspCategory)}</p>
+<pre>${escapeHtml(JSON.stringify(r.request.body, null, 2))}</pre>
 <pre>${escapeHtml(r.response.slice(0, 300))}</pre>
+${r.remediation ? `<p>${escapeHtml(r.remediation)}</p>` : ''}
 </div>
 `).join('')}` : '<p>No vulnerabilities found.</p>'}
 </body>

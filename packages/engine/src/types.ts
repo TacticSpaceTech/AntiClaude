@@ -21,6 +21,75 @@ export type AttackStrategy =
   | 'fragmented'
   | 'semantic'
 
+export type TargetAdapter =
+  | 'generic-json'
+  | 'openai-chat'
+  | 'anthropic-messages'
+  | 'custom-json'
+
+export interface TargetRequestConfig {
+  adapter?: TargetAdapter
+  authHeader?: string
+  bodyField?: string
+  bodyTemplate?: string
+  model?: string
+  maxTokens?: number
+}
+
+export interface TargetRequestEvidence {
+  method: 'POST'
+  url: string
+  adapter: TargetAdapter
+  headers: Record<string, string>
+  body: unknown
+}
+
+export interface TargetMetadata {
+  endpoint: string
+  adapter: TargetAdapter
+  bodyField?: string
+  hasAuthHeader: boolean
+  timeout: number
+  payloadCount: number
+  maxVariants: number
+  model?: string
+  maxTokens?: number
+}
+
+export interface ReproductionInfo {
+  command: string
+  config: Record<string, unknown>
+}
+
+export interface EvalSuiteConfig {
+  name?: string
+  description?: string
+  seed?: string | number
+  count?: number
+  categories?: OwaspCategory[]
+  severities?: Severity[]
+  tags?: string[]
+  payloadIds?: string[]
+  maxVariants?: number
+  expected?: {
+    minBreaches?: number
+    maxBreaches?: number
+    minScore?: number
+    maxScore?: number
+  }
+}
+
+export interface EvalSuiteMetadata {
+  name?: string
+  description?: string
+  seed?: string | number
+  count?: number
+  categories?: OwaspCategory[]
+  severities?: Severity[]
+  tags?: string[]
+  payloadIds?: string[]
+}
+
 export interface DetectRule {
   type: 'contains_any' | 'not_contains' | 'regex' | 'length_above'
   values?: string[]
@@ -54,17 +123,23 @@ export interface ScanResult {
   payloadId: string
   payloadName: string
   category: OwaspCategory
+  owaspCategory: OwaspCategory
   severity: Severity
   prompt: string
+  request: TargetRequestEvidence
   response: string
   fullResponse: string
   leaked: boolean
+  status: 'breached' | 'blocked' | 'error'
   confidence: number
+  confidenceSource: 'detector' | 'llm-judge' | 'none'
   indicators: string[]
   strategy: AttackStrategy
   generation: number
   requestDuration: number
+  remediation?: string
   error?: string
+  errorState?: string
   judgeVerdict?: LlmJudgeVerdict
 }
 
@@ -78,9 +153,12 @@ export interface OwaspCoverage {
 }
 
 export interface ScanReport {
+  reportVersion: 1
   id: string
   timestamp: string
   targetEndpoint: string
+  target: TargetMetadata
+  suite?: EvalSuiteMetadata
   duration: number
   results: ScanResult[]
   score: number
@@ -91,6 +169,54 @@ export interface ScanReport {
     breaches: number
     blocked: number
     errors: number
+  }
+  reproduction: ReproductionInfo
+}
+
+export interface CompareFinding {
+  payloadId: string
+  payloadName: string
+  category: OwaspCategory
+  severity: Severity
+  strategy: AttackStrategy
+  baselineStatus?: 'breached' | 'blocked' | 'error'
+  currentStatus?: 'breached' | 'blocked' | 'error'
+  baselineConfidence?: number
+  currentConfidence?: number
+}
+
+export interface CompareCategoryCoverageChange {
+  category: OwaspCategory
+  label: string
+  baselineScore: number
+  currentScore: number
+  delta: number
+}
+
+export interface CompareGateOptions {
+  failOnScoreDrop?: number
+  failOnNewBreachSeverity?: Severity[]
+  failOnNewError?: boolean
+  failOnCategoryRegression?: boolean
+}
+
+export interface CompareReport {
+  compareVersion: 1
+  baselineReportId: string
+  currentReportId: string
+  baselineScore: number
+  currentScore: number
+  scoreDelta: number
+  newBreaches: CompareFinding[]
+  fixedBreaches: CompareFinding[]
+  persistentBreaches: CompareFinding[]
+  newErrors: CompareFinding[]
+  resolvedErrors: CompareFinding[]
+  changedConfidence: CompareFinding[]
+  categoryCoverageChanges: CompareCategoryCoverageChange[]
+  gates: {
+    failed: boolean
+    failures: string[]
   }
 }
 
@@ -116,6 +242,8 @@ export interface ScanProgress {
 
 export interface ScanOptions {
   endpoint: string
+  target?: TargetRequestConfig
+  suite?: EvalSuiteConfig
   authHeader?: string
   payloadCount?: number
   maxVariants?: number
