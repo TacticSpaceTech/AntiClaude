@@ -83,8 +83,9 @@ export default function CicdPage() {
           <ul className="space-y-1.5 text-sm">
             <li><a href="#github-action" className="text-muted-foreground hover:text-primary transition-colors font-mono">01 GitHub Action</a></li>
             <li><a href="#cli-in-ci" className="text-muted-foreground hover:text-primary transition-colors font-mono">02 CLI in CI</a></li>
-            <li><a href="#fail-thresholds" className="text-muted-foreground hover:text-primary transition-colors font-mono">03 Fail Thresholds</a></li>
-            <li><a href="#llm-judge" className="text-muted-foreground hover:text-primary transition-colors font-mono">04 LLM Judge in CI</a></li>
+            <li><a href="#compare-gates" className="text-muted-foreground hover:text-primary transition-colors font-mono">03 Compare Gates</a></li>
+            <li><a href="#fail-thresholds" className="text-muted-foreground hover:text-primary transition-colors font-mono">04 Fail Thresholds</a></li>
+            <li><a href="#llm-judge" className="text-muted-foreground hover:text-primary transition-colors font-mono">05 LLM Judge in CI</a></li>
           </ul>
         </nav>
 
@@ -110,13 +111,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run AntiClaude scan
-        uses: TacticSpaceTech/anticlaude-action@v1
+        uses: TacticSpaceTech/AntiClaude/action@v1
         with:
           endpoint: \${{ secrets.AGENT_ENDPOINT }}
           auth: \${{ secrets.AGENT_AUTH }}
-          payloads: 20
-          threshold: 70
-          comment: true`}
+          count: 20
+          adapter: generic-json
+          output-format: json
+          baseline-report: docs/security/baseline.json
+          fail-on-new-severity: critical,high
+          fail-on-category-regression: true
+          fail-threshold: 70
+          comment-on-pr: true`}
         </CodeBlock>
 
         <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">Inputs</h3>
@@ -125,11 +131,21 @@ jobs:
           rows={[
             ['endpoint', 'Yes', '—', 'Target agent API endpoint URL'],
             ['auth', 'No', '""', 'Authorization header value'],
-            ['payloads', 'No', '6', 'Number of attack payloads to send (max 64)'],
-            ['threshold', 'No', '70', 'Minimum passing score (0-100)'],
-            ['categories', 'No', 'all', 'OWASP categories to test (comma-separated)'],
-            ['comment', 'No', 'true', 'Post results as a PR comment'],
-            ['llm-judge', 'No', 'false', 'Enable LLM judge for higher accuracy'],
+            ['adapter', 'No', 'generic-json', 'Request adapter: generic-json, openai-chat, anthropic-messages, custom-json'],
+            ['body-field', 'No', 'message', 'JSON field used by generic-json'],
+            ['body-template', 'No', '—', 'Custom JSON template for custom-json'],
+            ['target-model', 'No', '—', 'Model field for provider-compatible adapters'],
+            ['suite', 'No', '—', 'Eval suite JSON file with deterministic payload selection'],
+            ['count', 'No', '12', 'Number of payloads to test'],
+            ['variants', 'No', '2', 'Max adaptive variants per payload'],
+            ['fail-threshold', 'No', '70', 'Minimum passing score (0-100)'],
+            ['baseline-report', 'No', '—', 'Baseline JSON report for compare gates; requires output-format=json'],
+            ['fail-on-score-drop', 'No', '—', 'Fail if score drops by more than this many points'],
+            ['fail-on-new-severity', 'No', '—', 'Fail on new breaches at comma-separated severities'],
+            ['fail-on-new-error', 'No', 'false', 'Fail if current report has new errors'],
+            ['fail-on-category-regression', 'No', 'false', 'Fail if any OWASP category score regresses'],
+            ['comment-on-pr', 'No', 'true', 'Post results as a PR comment'],
+            ['llm-judge', 'No', '—', 'LLM judge provider: openai or anthropic'],
           ]}
         />
 
@@ -138,15 +154,17 @@ jobs:
           headers={['Output', 'Type', 'Description']}
           rows={[
             ['score', 'number', 'Overall security score (0-100)'],
-            ['passed', 'boolean', 'Whether the score met the threshold'],
-            ['report-path', 'string', 'Path to the full JSON report file'],
+            ['breaches', 'number', 'Number of detected breaches'],
+            ['errors', 'number', 'Number of request errors'],
+            ['report-path', 'string', 'Path to the generated report file'],
+            ['compare-path', 'string', 'Path to compare report JSON when baseline-report is set'],
           ]}
         />
 
         <p className="text-muted-foreground leading-relaxed mt-4">
-          When <InlineCode>comment</InlineCode> is enabled, the action posts a summary table
+          When <InlineCode>comment-on-pr</InlineCode> is enabled, the action posts a summary
           directly on your pull request showing the score, tested categories, and any
-          critical findings.
+          findings.
         </p>
 
         {/* CLI in CI */}
@@ -159,7 +177,7 @@ jobs:
 {`npx anticlaude scan \\
   --endpoint $AGENT_URL \\
   --auth "Bearer $AGENT_TOKEN" \\
-  --payloads 20 \\
+  --count 20 \\
   --output json \\
   --out report.json \\
   --json-summary`}
@@ -169,16 +187,15 @@ jobs:
         <OptionsTable
           headers={['Code', 'Meaning']}
           rows={[
-            ['0', 'Scan passed — score met or exceeded the threshold'],
-            ['1', 'Scan failed — score below threshold or critical vulnerability found'],
-            ['2', 'Runtime error — invalid endpoint, network failure, or bad arguments'],
+            ['0', 'Scan completed and, when --fail-threshold is set, score met the threshold'],
+            ['1', 'Bad arguments, scan failure, or score below --fail-threshold'],
           ]}
         />
 
         <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">Parsing the JSON report</h3>
         <p className="text-muted-foreground leading-relaxed mb-4">
           The JSON report can be parsed in subsequent CI steps to extract specific fields,
-          gate deployments, or feed into dashboards.
+          gate local workflows, or feed into your own internal reporting.
         </p>
         <CodeBlock lang="bash">
 {`# Extract score from report
@@ -193,10 +210,23 @@ if [ "$CRITICAL" -gt 0 ]; then
 fi`}
         </CodeBlock>
 
+        {/* Compare Gates */}
+        <SectionHeading id="compare-gates">Compare Gates</SectionHeading>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          Compare gates catch regressions against a committed baseline report. They require JSON reports.
+        </p>
+        <CodeBlock lang="bash">
+{`npx anticlaude compare baseline.json current.json \\
+  --fail-on-score-drop 10 \\
+  --fail-on-new-severity critical,high \\
+  --fail-on-new-error \\
+  --fail-on-category-regression`}
+        </CodeBlock>
+
         {/* Fail Thresholds */}
         <SectionHeading id="fail-thresholds">Fail Thresholds</SectionHeading>
         <p className="text-muted-foreground leading-relaxed mb-4">
-          Use <InlineCode>--threshold</InlineCode> to define the minimum acceptable security score.
+          Use <InlineCode>--fail-threshold</InlineCode> to define the minimum acceptable security score.
           If the scan result falls below this value, the CLI exits with code 1, failing your
           CI pipeline and blocking the merge.
         </p>
@@ -204,13 +234,13 @@ fi`}
 {`# Block PR if score drops below 70
 npx anticlaude scan \\
   --endpoint $AGENT_URL \\
-  --threshold 70
+  --fail-threshold 70
 
 # Stricter threshold for production branches
 npx anticlaude scan \\
   --endpoint $AGENT_URL \\
-  --threshold 85 \\
-  --payloads 40`}
+  --fail-threshold 85 \\
+  --count 40`}
         </CodeBlock>
         <p className="text-muted-foreground leading-relaxed mb-4">
           Recommended thresholds:
@@ -235,8 +265,8 @@ npx anticlaude scan \\
         <CodeBlock lang="bash">
 {`npx anticlaude scan \\
   --endpoint $AGENT_URL \\
-  --llm-judge \\
-  --threshold 70`}
+  --llm-judge openai \\
+  --fail-threshold 70`}
         </CodeBlock>
         <p className="text-muted-foreground leading-relaxed mb-4">
           The LLM judge requires an API key. Store it as a CI secret and pass it via
@@ -249,25 +279,26 @@ env:
 
 steps:
   - name: Run AntiClaude with LLM Judge
-    uses: TacticSpaceTech/anticlaude-action@v1
+    uses: TacticSpaceTech/AntiClaude/action@v1
     with:
       endpoint: \${{ secrets.AGENT_ENDPOINT }}
       auth: \${{ secrets.AGENT_AUTH }}
-      llm-judge: true
-      threshold: 70`}
+      llm-judge: openai
+      llm-key: \${{ secrets.OPENAI_API_KEY }}
+      fail-threshold: 70`}
         </CodeBlock>
         <p className="text-muted-foreground leading-relaxed mb-4">
           The LLM judge adds latency (roughly 1-2 seconds per payload) but catches subtle
-          information leaks and indirect prompt injection compliance that pattern matching
-          would miss. We recommend enabling it for staging and production pipelines.
+          information leaks and indirect prompt-injection failures that pattern matching
+          may miss. Consider enabling it for higher-signal staging checks.
         </p>
 
         <div className="bg-card/80 border border-primary/30 rounded-lg p-5 mt-10">
           <p className="font-mono text-sm text-primary mb-2">// tip</p>
           <p className="text-muted-foreground text-sm leading-relaxed">
             Combine <InlineCode>--llm-judge</InlineCode> with a higher payload count
-            for comprehensive coverage. A scan with 40 payloads and LLM judge typically
-            completes in under 2 minutes and provides production-grade confidence.
+            for broader coverage. Runtime depends on target latency and judge provider
+            latency, so keep CI timeouts explicit.
           </p>
         </div>
       </main>

@@ -5,7 +5,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://anticlaude.dev'
 
   const staticPages = [
-    '', '/features', '/docs', '/about', '/enterprise',
+    '', '/control-plane', '/features', '/docs', '/about', '/enterprise',
     '/cicd', '/blog', '/contact', '/privacy', '/terms',
   ]
 

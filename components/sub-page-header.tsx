@@ -7,6 +7,7 @@ import { LanguageSwitcher } from './language-switcher'
 import { Github, Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
+  { href: '/control-plane', label: 'Control Plane' },
   { href: '/features', key: 'nav.features' },
   { href: '/docs', key: 'nav.docs' },
   { href: '/blog', key: 'nav.blog' },
@@ -35,7 +36,7 @@ function HeaderInner({ active }: { active?: string }) {
                 active === link.href ? 'text-primary' : 'text-muted-foreground hover:text-primary'
               }`}
             >
-              {t(link.key as any)}
+              {'label' in link ? link.label : t(link.key as any)}
             </Link>
           ))}
         </nav>
@@ -60,7 +61,7 @@ function HeaderInner({ active }: { active?: string }) {
           {NAV_LINKS.map(link => (
             <Link key={link.href} href={link.href}
               className={`block text-sm font-mono ${active === link.href ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}>
-              {t(link.key as any)}
+              {'label' in link ? link.label : t(link.key as any)}
             </Link>
           ))}
           <div className="pt-2 flex items-center gap-3">

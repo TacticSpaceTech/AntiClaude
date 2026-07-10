@@ -3,71 +3,74 @@ import Link from 'next/link'
 import { SubPageHeader } from '@/components/sub-page-header'
 
 export const metadata: Metadata = {
-  title: 'Enterprise - AntiClaude',
-  description: 'Enterprise-grade AI agent security: team collaboration, compliance reporting, CI/CD integration, and priority support.',
+  title: 'Roadmap - AntiClaude',
+  description: 'Planned team workflows for AntiClaude reports, history, and CI visibility.',
 }
 
 const tiers = [
   {
     name: 'Community',
-    price: 'Free',
-    description: 'Everything you need to get started with AI agent security testing.',
+    status: 'Shipped',
+    description: 'Everything currently available in the open-source local workflow.',
     comingSoon: false,
     features: [
       'Full CLI with all commands',
       '64 attack payloads across 7 OWASP categories',
       'Open-source engine and payloads',
       'Local HTML and JSON reports',
+      'Local runtime control beta examples',
+      'Guard SDK and local guard alpha',
+      'Support-agent runtime policy and review queue',
       'MCP server configuration audit',
       'GitHub Action integration',
     ],
   },
   {
-    name: 'Pro',
-    price: '$19/mo',
-    description: 'Cloud-powered insights and historical tracking for individual developers.',
+    name: 'Individual Cloud History',
+    status: 'Planned',
+    description: 'Planned cloud report history for individual developers.',
     comingSoon: true,
     features: [
       'Everything in Community',
-      'Cloud report dashboard',
-      'Historical security score trends',
-      'Team report sharing via links',
+      'Report history views',
+      'Security score trend views',
+      'Report sharing links',
       'Priority payload updates',
       'Email support',
     ],
   },
   {
-    name: 'Team',
-    price: '$49/mo per seat',
-    description: 'Built for teams shipping AI agents in production with compliance needs.',
+    name: 'Team Workflows',
+    status: 'Planned',
+    description: 'Planned team workflows for organizations running repeated evals.',
     comingSoon: true,
     features: [
       'Everything in Pro',
-      'Deep CI/CD integration (GitHub, GitLab, Jenkins)',
+      'CI run history across repositories',
       'Role-based access control (RBAC)',
-      'Compliance report export (PDF, CSV)',
-      'SOC 2 / ISO 27001 compatible reports',
-      'SLA with dedicated support channel',
+      'Shared report review queues',
+      'Baseline drift views',
+      'Dedicated setup support',
     ],
   },
 ]
 
 const enterpriseReasons = [
   {
-    title: 'Centralized Vulnerability Tracking',
-    description: 'Track security scores across all your agents in one dashboard. Spot regressions before they reach production.',
+    title: 'Local Regression Evidence First',
+    description: 'Compare baseline and current reports locally before a future hosted workflow exists.',
   },
   {
-    title: 'Compliance-Ready Reports',
-    description: 'Generate audit-ready reports compatible with SOC 2 and ISO 27001 frameworks. Export to PDF or CSV for compliance teams.',
+    title: 'Evidence-First Reports',
+    description: 'Review raw request and response evidence, detector indicators, remediation guidance, and reproduction commands from each scan.',
   },
   {
-    title: 'Priority Payload Access',
-    description: 'Get early access to new OWASP categories and attack payloads as the threat landscape evolves.',
+    title: 'Policy And Replay Foundation',
+    description: 'Use the shipped Guard SDK, runtime policy, review queue, and trace replay to shape future workflows.',
   },
   {
-    title: 'Dedicated Support',
-    description: 'Priority support channel with guaranteed response times. Get help configuring scans, interpreting results, and hardening your agents.',
+    title: 'Roadmap Input',
+    description: 'Discuss repeated eval needs, CI gates, and report review workflows without implying a current paid dashboard.',
   },
 ]
 
@@ -81,13 +84,13 @@ export default function EnterprisePage() {
         <section className="py-24 relative">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(0,255,65,0.04)_0%,_transparent_60%)]" />
           <div className="max-w-5xl mx-auto px-6 relative text-center">
-            <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">// enterprise</p>
+            <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">// roadmap</p>
             <h1 className="text-4xl md:text-5xl font-mono font-bold text-foreground mb-6">
-              Enterprise-Grade AI Agent Security
+              Roadmap for Agent Security Workflows
             </h1>
             <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto text-lg">
-              Everything in the open-source CLI, plus team collaboration, compliance
-              reporting, and priority support.
+              The shipped product is the open-source CLI, engine, web scanner, local runtime control beta examples, Guard alpha, and GitHub Action.
+              Team dashboards and cloud report history are planned, not available yet.
             </p>
           </div>
         </section>
@@ -95,9 +98,9 @@ export default function EnterprisePage() {
         {/* Tiers */}
         <section className="py-24 border-t border-primary/10 relative">
           <div className="max-w-5xl mx-auto px-6 relative">
-            <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">// plans</p>
+            <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">// current and planned</p>
             <h2 className="text-3xl md:text-4xl font-mono font-bold text-foreground mb-12">
-              {"What's Included"}
+              Scope
             </h2>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -117,7 +120,7 @@ export default function EnterprisePage() {
                     )}
                   </div>
                   <p className="text-2xl font-bold text-primary font-mono mb-3">
-                    {tier.price}
+                    {tier.status}
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                     {tier.description}
@@ -136,13 +139,13 @@ export default function EnterprisePage() {
           </div>
         </section>
 
-        {/* Why Enterprise */}
+        {/* Why Team Workflows */}
         <section className="py-24 border-t border-primary/10 relative">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(0,255,65,0.03)_0%,_transparent_50%)]" />
           <div className="max-w-5xl mx-auto px-6 relative">
-            <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">// why enterprise</p>
+            <p className="text-sm font-mono text-primary/60 mb-3 tracking-wider">// why team workflows</p>
             <h2 className="text-3xl md:text-4xl font-mono font-bold text-foreground mb-12">
-              Why Enterprise?
+              Why Team Workflows?
             </h2>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -176,8 +179,7 @@ export default function EnterprisePage() {
               Get Started
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto mb-10">
-              Start testing your AI agents for free today, or reach out to discuss
-              enterprise needs.
+              Start with the local workflow today, or reach out to discuss roadmap needs.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -191,7 +193,7 @@ export default function EnterprisePage() {
                 href="/contact"
                 className="inline-flex items-center gap-2 border border-border text-foreground font-mono font-semibold px-6 py-3 rounded-lg hover:border-primary/40 hover:bg-card/80 transition-colors"
               >
-                Contact Us for Enterprise
+                Discuss Roadmap Needs
               </Link>
               <a
                 href="https://github.com/TacticSpaceTech/AntiClaude"

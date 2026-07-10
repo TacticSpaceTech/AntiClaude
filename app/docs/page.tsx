@@ -3,7 +3,7 @@ import { SubPageHeader } from '@/components/sub-page-header'
 
 export const metadata: Metadata = {
   title: 'Documentation - AntiClaude',
-  description: 'AntiClaude documentation: CLI commands, GitHub Action, engine library, and contributing guide.',
+  description: 'AntiClaude documentation: CLI commands, runtime control, GitHub Action, engine library, and contributing guide.',
 }
 
 function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
@@ -65,8 +65,8 @@ export default function DocsPage() {
           <p className="text-sm font-mono text-primary/60 mb-2">// documentation</p>
           <h1 className="text-4xl font-mono font-bold text-foreground mb-4">AntiClaude Docs</h1>
           <p className="text-muted-foreground leading-relaxed max-w-2xl">
-            Everything you need to red-team your AI agents, scan MCP configurations,
-            and integrate security testing into your CI/CD pipeline.
+            Everything you need to red-team your AI agents, test local runtime control,
+            scan MCP configurations, and integrate security testing into your CI/CD pipeline.
           </p>
         </div>
 
@@ -76,9 +76,10 @@ export default function DocsPage() {
           <ul className="space-y-1.5 text-sm">
             <li><a href="#quick-start" className="text-muted-foreground hover:text-primary transition-colors font-mono">01 Quick Start</a></li>
             <li><a href="#cli-commands" className="text-muted-foreground hover:text-primary transition-colors font-mono">02 CLI Commands</a></li>
-            <li><a href="#github-action" className="text-muted-foreground hover:text-primary transition-colors font-mono">03 GitHub Action</a></li>
-            <li><a href="#engine-library" className="text-muted-foreground hover:text-primary transition-colors font-mono">04 Engine as Library</a></li>
-            <li><a href="#contributing" className="text-muted-foreground hover:text-primary transition-colors font-mono">05 Contributing</a></li>
+            <li><a href="#control-plane" className="text-muted-foreground hover:text-primary transition-colors font-mono">03 Runtime Control Beta</a></li>
+            <li><a href="#github-action" className="text-muted-foreground hover:text-primary transition-colors font-mono">04 GitHub Action</a></li>
+            <li><a href="#engine-library" className="text-muted-foreground hover:text-primary transition-colors font-mono">05 Engine as Library</a></li>
+            <li><a href="#contributing" className="text-muted-foreground hover:text-primary transition-colors font-mono">06 Contributing</a></li>
           </ul>
         </nav>
 
@@ -91,11 +92,15 @@ export default function DocsPage() {
 {`npx anticlaude scan \\
   --endpoint https://your-agent.example.com/api/chat \\
   --auth "Bearer sk-..." \\
-  --payloads 20`}
+  --count 20 \\
+  --adapter generic-json \\
+  --body-field message`}
         </CodeBlock>
         <p className="text-muted-foreground leading-relaxed mb-4">
-          This sends 20 randomized attack payloads to your endpoint, evaluates every response
-          with the LLM judge, and outputs a security report with a score out of 100.
+          This sends randomized attack payloads to your endpoint, evaluates every response
+          with deterministic detectors, and outputs an evidence-first report with a score out of 100.
+          Add <InlineCode>--llm-judge openai</InlineCode> or <InlineCode>--llm-judge anthropic</InlineCode>
+          when you want an optional semantic judge.
         </p>
 
         {/* CLI Commands */}
@@ -108,37 +113,71 @@ export default function DocsPage() {
           Run attack payloads against an AI agent endpoint.
         </p>
         <OptionsTable rows={[
-          ['--endpoint, -e', '(required)', 'Target agent API endpoint URL'],
-          ['--auth, -a', '""', 'Authorization header value (e.g. "Bearer sk-...")'],
-          ['--payloads, -p', '6', 'Number of payloads to send (max 64)'],
-          ['--categories, -c', 'all', 'OWASP categories to test (comma-separated)'],
-          ['--severity', 'all', 'Filter by severity: low, medium, high, critical'],
-          ['--output, -o', 'stdout', 'Output file path for JSON report'],
-          ['--threshold', '70', 'Minimum passing score (exit 1 if below)'],
+          ['--endpoint', '(required)', 'Target agent API endpoint URL'],
+          ['--auth', '""', 'Authorization header value (e.g. "Bearer sk-...")'],
+          ['--adapter', 'generic-json', 'Request adapter: generic-json, openai-chat, anthropic-messages, custom-json'],
+          ['--body-field', 'message', 'JSON field for the generic-json adapter'],
+          ['--body-template', '""', 'Custom JSON request template using {{prompt}} or {{promptJson}}'],
+          ['--target-model', '""', 'Model field for OpenAI-compatible or Anthropic-compatible APIs'],
+          ['--suite', '""', 'Eval suite JSON file with deterministic payload selection'],
+          ['--count', '12', 'Number of payloads to test'],
+          ['--variants', '2', 'Max adaptive variants per payload'],
+          ['--timeout', '15000', 'Request timeout in ms'],
+          ['--output', 'markdown', 'Report format: json, markdown, html'],
+          ['--out', '""', 'Write report to a file'],
+          ['--fail-threshold', '""', 'Exit 1 if score is below this threshold'],
+          ['--json-summary', 'false', 'Print ANTICLAUDE_SUMMARY for CI parsers'],
         ]} />
+
+        <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
+          <InlineCode>fixtures</InlineCode>
+        </h3>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          Start deterministic local mock agents for eval lab runs.
+        </p>
+        <CodeBlock>
+{`node packages/cli/dist/index.js fixtures --kind support-agent --port 4100`}
+        </CodeBlock>
+
+        <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
+          <InlineCode>compare</InlineCode>
+        </h3>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          Compare baseline and current JSON reports with local regression gates.
+        </p>
+        <CodeBlock>
+{`npx anticlaude compare baseline.json current.json \\
+  --fail-on-score-drop 10 \\
+  --fail-on-new-severity critical,high \\
+  --fail-on-new-error \\
+  --fail-on-category-regression`}
+        </CodeBlock>
 
         <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
           <InlineCode>audit</InlineCode>
         </h3>
         <p className="text-muted-foreground leading-relaxed mb-4">
-          Perform a comprehensive audit combining scan + mcp-scan with a unified report.
+          Audit a local skill or tool definition for poisoning, injection, permission scope,
+          return-value trust, tool shadowing, and integrity risks.
         </p>
         <OptionsTable rows={[
-          ['--endpoint, -e', '(required)', 'Target agent API endpoint URL'],
-          ['--config', '""', 'MCP config file to include in audit'],
-          ['--auth, -a', '""', 'Authorization header value'],
-          ['--output, -o', 'stdout', 'Output file path for JSON report'],
+          ['<path>', '(required)', 'Path to a skill file or directory'],
+          ['--pin', 'false', 'Generate an .anticlaude-lock integrity file'],
+          ['--lock', '""', 'Path to an existing integrity lock file'],
         ]} />
 
         <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
           <InlineCode>mcp-scan</InlineCode>
         </h3>
         <p className="text-muted-foreground leading-relaxed mb-4">
-          Audit an MCP server configuration file for security issues.
+          Discover and audit MCP server configurations for credential exposure,
+          command injection, dependency integrity, permission escalation, and source validation.
         </p>
         <OptionsTable rows={[
-          ['--config', '(required)', 'Path to MCP configuration JSON file'],
-          ['--output, -o', 'stdout', 'Output file path for JSON report'],
+          ['--config', 'auto-discover', 'Explicit MCP config path; omit to scan known local config locations'],
+          ['--project', '.', 'Project directory for local MCP config discovery'],
+          ['--output', 'text', 'Output format: text, json, markdown'],
+          ['--out', '""', 'Write report to a file'],
         ]} />
 
         <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
@@ -151,6 +190,53 @@ export default function DocsPage() {
           ['--score', '(required)', 'Security score (0-100)'],
           ['--output, -o', 'badge.svg', 'Output file path'],
         ]} />
+
+        <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
+          <InlineCode>guard</InlineCode>
+        </h3>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          Start the local-only Guard alpha gateway for prompt, tool-call, and output policy decisions.
+        </p>
+        <CodeBlock>
+{`npx anticlaude guard \\
+  --config docs/examples/policies/anticlaude.policy.yaml \\
+  --target http://127.0.0.1:4100/chat \\
+  --trace traces/anticlaude-guard.jsonl \\
+  --review-store reviews/anticlaude-reviews.jsonl`}
+        </CodeBlock>
+
+        <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
+          <InlineCode>review</InlineCode>
+        </h3>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          List, inspect, approve, or deny local runtime review requests.
+        </p>
+        <CodeBlock>
+{`node packages/cli/dist/index.js review list --store reviews/anticlaude-reviews.jsonl
+node packages/cli/dist/index.js review approve review_id --store reviews/anticlaude-reviews.jsonl --reason "Verified request"`}
+        </CodeBlock>
+
+        <h3 className="text-lg font-mono font-semibold text-foreground mt-8 mb-3">
+          <InlineCode>replay</InlineCode>
+        </h3>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          Replay local JSONL audit traces as a timeline.
+        </p>
+        <CodeBlock>
+{`npx anticlaude replay docs/examples/traces/sample-trace.jsonl`}
+        </CodeBlock>
+
+        {/* Control Plane */}
+        <SectionHeading id="control-plane">Runtime Control Beta</SectionHeading>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          The local web console at <InlineCode>/control-plane</InlineCode> loads committed example agents,
+          tools, runtime profile, review queue, incidents, reports, comparisons, policy decisions, and trace data
+          from this repo. It is an inspection surface for local artifacts, not a hosted dashboard.
+        </p>
+        <CodeBlock>
+{`pnpm dev
+open http://localhost:3000/control-plane`}
+        </CodeBlock>
 
         {/* GitHub Action */}
         <SectionHeading id="github-action">GitHub Action</SectionHeading>
@@ -172,16 +258,22 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run AntiClaude scan
-        uses: TacticSpaceTech/anticlaude-action@v1
+        uses: TacticSpaceTech/AntiClaude/action@v1
         with:
           endpoint: \${{ secrets.AGENT_ENDPOINT }}
           auth: \${{ secrets.AGENT_AUTH }}
-          payloads: 20
-          threshold: 70`}
+          output-format: json
+          baseline-report: docs/examples/reports/baseline-safe.json
+          fail-on-new-severity: critical,high
+          fail-on-category-regression: true
+          count: 20
+          fail-threshold: 70`}
         </CodeBlock>
         <p className="text-muted-foreground leading-relaxed mb-4">
-          The action will fail the workflow if the security score drops below the threshold,
-          preventing vulnerable agent configurations from reaching production.
+          The action fails the workflow if the score drops below <InlineCode>fail-threshold</InlineCode>.
+          It emits stable <InlineCode>score</InlineCode>, <InlineCode>breaches</InlineCode>,
+          <InlineCode>errors</InlineCode>, and <InlineCode>report-path</InlineCode> outputs.
+          When compare gates are enabled, it also emits <InlineCode>compare-path</InlineCode>.
         </p>
 
         {/* Engine as Library */}
@@ -193,32 +285,48 @@ jobs:
 {`npm install @anticlaude/engine`}
         </CodeBlock>
         <CodeBlock>
-{`import { loadPayloads, runAttack, judge } from '@anticlaude/engine'
+{`import {
+  DEFAULT_GUARD_POLICY,
+  DEFAULT_RUNTIME_POLICY_PROFILE,
+  evaluateGuardPolicy,
+  evaluateRuntimeToolRequest,
+  runScan,
+} from '@anticlaude/engine'
 
-// Load all payloads (or filter by category/severity)
-const payloads = loadPayloads({
-  categories: ['prompt-injection', 'data-exfiltration'],
-  count: 10
+const report = await runScan({
+  endpoint: 'https://your-agent.example.com/api/chat',
+  target: {
+    adapter: 'generic-json',
+    bodyField: 'message',
+    authHeader: 'Bearer sk-...',
+  },
+  payloadCount: 10,
+  maxVariants: 2,
 })
 
-// Run an attack against your endpoint
-for (const payload of payloads) {
-  const response = await runAttack({
-    endpoint: 'https://your-agent.example.com/api/chat',
-    payload,
-    auth: 'Bearer sk-...',
-  })
+console.log(report.reportVersion)
+console.log(report.score)
+console.log(report.results[0].request.body)
 
-  // Judge the response for information leaks
-  const result = await judge(payload, response)
-  console.log(\`\${payload.name}: \${result.leaked ? 'LEAKED' : 'SAFE'}\`)
-}`}
+const decision = evaluateGuardPolicy(DEFAULT_GUARD_POLICY, {
+  surface: 'tool-call',
+  toolCall: { name: 'refund_user', arguments: { amount: 9999 } },
+})
+
+console.log(decision.action)
+
+const runtimeDecision = evaluateRuntimeToolRequest(DEFAULT_RUNTIME_POLICY_PROFILE, {
+  agentId: 'support-agent',
+  toolCall: { name: 'export_customer_data', arguments: { destination: 'external@example.com' } },
+})
+
+console.log(runtimeDecision.action)`}
         </CodeBlock>
 
         {/* Contributing */}
         <SectionHeading id="contributing">Contributing</SectionHeading>
         <p className="text-muted-foreground leading-relaxed mb-4">
-          AntiClaude is open source under AGPL-3.0. We welcome contributions of all kinds:
+          AntiClaude is open source under AGPL-3.0-only. We welcome contributions of all kinds:
           new payloads, engine improvements, documentation, and bug fixes.
         </p>
         <p className="text-muted-foreground leading-relaxed mb-4">

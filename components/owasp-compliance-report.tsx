@@ -211,7 +211,7 @@ export function OWASPComplianceReport({ categories, className }: OWASPCompliance
           </div>
           <div>
             <h3 className="font-mono font-bold text-foreground">
-              OWASP Agentic Security {getLang() === 'zh' ? '合规报告' : 'Compliance'}
+              OWASP Agentic Security {getLang() === 'zh' ? '覆盖报告' : 'Coverage'}
             </h3>
             <p className="text-xs text-foreground/50 font-mono">
               {getLang() === 'zh' ? '基于 OWASP Agentic Security Initiative 标准' : 'Based on OWASP Agentic Security Initiative'}
@@ -348,7 +348,7 @@ export function OWASPComplianceReport({ categories, className }: OWASPCompliance
       <div className="flex items-center justify-center pt-4">
         <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground/5 border border-foreground/10">
           <span className="text-[10px] font-mono text-foreground/40">
-            {getLang() === 'zh' ? '合规标准' : 'Compliance Standard'}:
+            {getLang() === 'zh' ? '覆盖基准' : 'Coverage Baseline'}:
           </span>
           <span className="text-xs font-mono text-primary font-bold">
             OWASP LLM Top 10 v2025

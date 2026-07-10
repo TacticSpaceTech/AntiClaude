@@ -25,6 +25,7 @@ function HomeContent() {
     { id: 1, text: t('terminal.waiting'), type: 'info' }
   ])
   const [results, setResults] = useState<AttackResult[]>([])
+  const [scanScore, setScanScore] = useState<number | null>(null)
   const [isReportLocked, setIsReportLocked] = useState(true)
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [lineId, setLineId] = useState(2)
@@ -99,6 +100,7 @@ function HomeContent() {
     setPhase('attacking')
     setIsRunning(true)
     setResults([])
+    setScanScore(null)
     setTargetEndpoint(config.endpoint)
     setTerminalLines([
       { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
@@ -122,10 +124,20 @@ function HomeContent() {
         body: JSON.stringify({
           endpoint: config.endpoint,
           authHeader: config.authHeader,
-          payloadCount: 6
+          payloadCount: config.payloadCount,
+          adapter: config.adapter,
+          bodyField: config.bodyField,
+          bodyTemplate: config.bodyTemplate,
+          targetModel: config.targetModel,
+          maxTokens: config.maxTokens,
         }),
         signal: controller.signal
       })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || `Scan request failed with HTTP ${response.status}`)
+      }
 
       if (!response.body) {
         throw new Error('No response body')
@@ -232,6 +244,7 @@ function HomeContent() {
             )
 
             setResults(attackResults)
+            setScanScore(typeof data.report?.score === 'number' ? data.report.score : calculateSecurityScore(attackResults))
             setIsRunning(false)
             abortControllerRef.current = null
 
@@ -268,6 +281,7 @@ function HomeContent() {
   const handleNewTest = () => {
     setPhase('input')
     setResults([])
+    setScanScore(null)
     setIsReportLocked(true)
     setTerminalLines([
       { id: 0, text: 'AntiClaude Security Scanner v1.0', type: 'system' },
@@ -281,7 +295,7 @@ function HomeContent() {
     setMobileMenuOpen(false)
   }
 
-  const score = calculateSecurityScore(results)
+  const score = scanScore ?? calculateSecurityScore(results)
   const vulnerabilityCount = results.filter(r => r.leaked).length
 
   return (

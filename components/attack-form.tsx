@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { ChevronDown, ChevronUp, Zap, Key } from 'lucide-react'
 
 interface AttackFormProps {
@@ -15,12 +16,22 @@ export interface AttackConfig {
   endpoint: string
   authHeader?: string
   payloadCount: number
+  adapter: 'generic-json' | 'openai-chat' | 'anthropic-messages' | 'custom-json'
+  bodyField?: string
+  bodyTemplate?: string
+  targetModel?: string
+  maxTokens?: number
 }
 
 export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
   const { t } = useI18n()
   const [endpoint, setEndpoint] = useState('')
   const [authHeader, setAuthHeader] = useState('')
+  const [adapter, setAdapter] = useState<AttackConfig['adapter']>('generic-json')
+  const [bodyField, setBodyField] = useState('message')
+  const [bodyTemplate, setBodyTemplate] = useState('{"message":"{{prompt}}"}')
+  const [targetModel, setTargetModel] = useState('')
+  const [maxTokens, setMaxTokens] = useState('1024')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [error, setError] = useState('')
 
@@ -40,10 +51,24 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
       return
     }
 
+    if (adapter === 'custom-json') {
+      try {
+        JSON.parse(bodyTemplate.replaceAll('{{promptJson}}', JSON.stringify('test')).replaceAll('{{prompt}}', 'test'))
+      } catch {
+        setError('Custom body template must be valid JSON after {{prompt}} replacement')
+        return
+      }
+    }
+
     onStartAttack({
       endpoint: endpoint.trim(),
       authHeader: authHeader.trim() || undefined,
-      payloadCount: 8
+      payloadCount: 8,
+      adapter,
+      bodyField: bodyField.trim() || 'message',
+      bodyTemplate: adapter === 'custom-json' ? bodyTemplate.trim() : undefined,
+      targetModel: targetModel.trim() || undefined,
+      maxTokens: adapter === 'anthropic-messages' ? Number(maxTokens) || 1024 : undefined,
     })
   }
 
@@ -119,7 +144,7 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
 
       {/* Advanced Options */}
       {showAdvanced && (
-        <div className="bg-black/60 backdrop-blur-sm border border-primary/20 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="bg-black/60 backdrop-blur-sm border border-primary/20 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <Key className="w-4 h-4 text-primary/50" />
             <span className="text-xs text-primary/60 font-mono">
@@ -137,6 +162,77 @@ export function AttackForm({ onStartAttack, isRunning }: AttackFormProps) {
           <p className="text-xs text-primary/40 mt-2 font-mono">
             {'// '}{t('form.authHint')}
           </p>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-xs text-primary/60 font-mono">Adapter</span>
+              <select
+                value={adapter}
+                onChange={(e) => setAdapter(e.target.value as AttackConfig['adapter'])}
+                className="h-10 w-full rounded-md border border-primary/20 bg-black/40 px-3 text-sm text-primary font-mono"
+                disabled={isRunning}
+              >
+                <option value="generic-json">Generic JSON</option>
+                <option value="openai-chat">OpenAI chat</option>
+                <option value="anthropic-messages">Anthropic messages</option>
+                <option value="custom-json">Custom JSON</option>
+              </select>
+            </label>
+
+            {adapter === 'generic-json' && (
+              <label className="space-y-2">
+                <span className="text-xs text-primary/60 font-mono">JSON field</span>
+                <Input
+                  value={bodyField}
+                  onChange={(e) => setBodyField(e.target.value)}
+                  className="bg-black/40 border-primary/20 text-primary placeholder:text-primary/30 focus-visible:ring-primary/50 font-mono text-sm"
+                  disabled={isRunning}
+                />
+              </label>
+            )}
+
+            {(adapter === 'openai-chat' || adapter === 'anthropic-messages') && (
+              <label className="space-y-2">
+                <span className="text-xs text-primary/60 font-mono">Model</span>
+                <Input
+                  value={targetModel}
+                  onChange={(e) => setTargetModel(e.target.value)}
+                  placeholder="optional"
+                  className="bg-black/40 border-primary/20 text-primary placeholder:text-primary/30 focus-visible:ring-primary/50 font-mono text-sm"
+                  disabled={isRunning}
+                />
+              </label>
+            )}
+
+            {adapter === 'anthropic-messages' && (
+              <label className="space-y-2">
+                <span className="text-xs text-primary/60 font-mono">Max tokens</span>
+                <Input
+                  type="number"
+                  min="1"
+                  value={maxTokens}
+                  onChange={(e) => setMaxTokens(e.target.value)}
+                  className="bg-black/40 border-primary/20 text-primary placeholder:text-primary/30 focus-visible:ring-primary/50 font-mono text-sm"
+                  disabled={isRunning}
+                />
+              </label>
+            )}
+          </div>
+
+          {adapter === 'custom-json' && (
+            <label className="space-y-2 block">
+              <span className="text-xs text-primary/60 font-mono">Body template</span>
+              <Textarea
+                value={bodyTemplate}
+                onChange={(e) => setBodyTemplate(e.target.value)}
+                className="min-h-24 bg-black/40 border-primary/20 text-primary placeholder:text-primary/30 focus-visible:ring-primary/50 font-mono text-sm"
+                disabled={isRunning}
+              />
+              <p className="text-xs text-primary/40 font-mono">
+                {'// '}Use {'{{prompt}}'} inside a JSON string or {'{{promptJson}}'} as a JSON value.
+              </p>
+            </label>
+          )}
         </div>
       )}
 

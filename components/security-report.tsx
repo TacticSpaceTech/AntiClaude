@@ -14,12 +14,20 @@ import { OWASPComplianceReport, mapToOWASP } from './owasp-compliance-report'
 
 export interface AttackResult {
   payload: Payload
+  request?: {
+    adapter: string
+    headers: Record<string, string>
+    body: unknown
+  }
   response: string
   fullResponse?: string
   leaked: boolean
+  status?: 'breached' | 'blocked' | 'error'
   confidence: number
+  confidenceSource?: string
   indicators: string[]
   requestDuration?: number
+  remediation?: string
   error?: string | null
   isSimulated?: boolean
   strategy?: string
@@ -404,12 +412,36 @@ export function SecurityReport({ score, results, endpoint = 'https://api.example
                     </div>
                   )}
 
+                  {/* Request Evidence */}
+                  {result.request && (
+                    <div>
+                      <p className="text-xs text-primary/50 mb-2 font-mono">{'// REQUEST_BODY'}</p>
+                      <pre className="text-xs bg-black/60 p-3 rounded border border-primary/20 overflow-x-auto text-foreground/80 font-mono whitespace-pre-wrap">
+                        {JSON.stringify(result.request.body, null, 2)}
+                      </pre>
+                      <p className="text-[10px] text-primary/40 mt-1 font-mono">
+                        adapter={result.request.adapter}
+                        {result.confidenceSource ? ` confidence_source=${result.confidenceSource}` : ''}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Remediation */}
+                  {result.remediation && result.leaked && (
+                    <div>
+                      <p className="text-xs text-primary/50 mb-2 font-mono">{'// REMEDIATION'}</p>
+                      <p className="text-xs bg-primary/5 p-3 rounded border border-primary/20 text-foreground/80 font-mono whitespace-pre-wrap">
+                        {result.remediation}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Error Info */}
                   {result.error && (
                     <div className="flex items-start gap-2 p-2 bg-warning/10 border border-warning/20 rounded">
                       <Wifi className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                       <p className="text-xs text-warning/80 font-mono">
-                        API call failed: {result.error}. Showing simulated result.
+                        API call failed: {result.error}. No simulated finding was generated.
                       </p>
                     </div>
                   )}
