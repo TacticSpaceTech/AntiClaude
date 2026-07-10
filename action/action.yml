@@ -11,6 +11,27 @@ inputs:
   auth:
     description: 'Authorization header value'
     required: false
+  adapter:
+    description: 'Target request adapter: generic-json, openai-chat, anthropic-messages, custom-json'
+    required: false
+    default: 'generic-json'
+  body-field:
+    description: 'JSON field used by the generic-json adapter'
+    required: false
+    default: 'message'
+  body-template:
+    description: 'Custom JSON request template for custom-json. Use {{prompt}} or {{promptJson}}.'
+    required: false
+  target-model:
+    description: 'Model field for OpenAI-compatible or Anthropic-compatible adapters'
+    required: false
+  max-tokens:
+    description: 'max_tokens for Anthropic-compatible requests'
+    required: false
+    default: '1024'
+  suite:
+    description: 'Eval suite JSON file with deterministic payload selection'
+    required: false
   count:
     description: 'Number of payloads to test'
     required: false
@@ -31,6 +52,23 @@ inputs:
     description: 'Minimum score to pass (0-100). Action fails if score is below this.'
     required: false
     default: '70'
+  baseline-report:
+    description: 'Optional baseline AntiClaude JSON report for compare/regression gates. Requires output-format=json.'
+    required: false
+  fail-on-score-drop:
+    description: 'Fail compare gate if score drops by more than this many points'
+    required: false
+  fail-on-new-severity:
+    description: 'Fail compare gate on new breaches at these severities, comma-separated (for example critical,high)'
+    required: false
+  fail-on-new-error:
+    description: 'Fail compare gate if current report has new errors (true/false)'
+    required: false
+    default: 'false'
+  fail-on-category-regression:
+    description: 'Fail compare gate if any OWASP category score regresses (true/false)'
+    required: false
+    default: 'false'
   llm-judge:
     description: 'LLM judge provider (openai or anthropic). Optional.'
     required: false
@@ -49,9 +87,15 @@ outputs:
   breaches:
     description: 'Number of breaches found'
     value: ${{ steps.parse.outputs.breaches }}
+  errors:
+    description: 'Number of scan request errors'
+    value: ${{ steps.parse.outputs.errors }}
   report-path:
     description: 'Path to the generated report file'
     value: ${{ steps.scan.outputs.report_path }}
+  compare-path:
+    description: 'Path to the generated compare report JSON file, when baseline-report is set'
+    value: ${{ steps.compare.outputs.compare_path }}
 
 runs:
   using: 'composite'
@@ -80,70 +124,244 @@ runs:
       shell: bash
       working-directory: ${{ github.action_path }}/..
       env:
+        INPUT_ENDPOINT: ${{ inputs.endpoint }}
+        INPUT_AUTH: ${{ inputs.auth }}
+        INPUT_ADAPTER: ${{ inputs.adapter }}
+        INPUT_BODY_FIELD: ${{ inputs.body-field }}
+        INPUT_BODY_TEMPLATE: ${{ inputs.body-template }}
+        INPUT_TARGET_MODEL: ${{ inputs.target-model }}
+        INPUT_MAX_TOKENS: ${{ inputs.max-tokens }}
+        INPUT_SUITE: ${{ inputs.suite }}
+        INPUT_COUNT: ${{ inputs.count }}
+        INPUT_VARIANTS: ${{ inputs.variants }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+        INPUT_OUTPUT_FORMAT: ${{ inputs.output-format }}
+        INPUT_LLM_JUDGE: ${{ inputs.llm-judge }}
         ANTICLAUDE_LLM_KEY: ${{ inputs.llm-key }}
       run: |
-        EXT="md"
-        if [ "${{ inputs.output-format }}" = "json" ]; then EXT="json"; fi
-        if [ "${{ inputs.output-format }}" = "html" ]; then EXT="html"; fi
-        REPORT_PATH="${{ runner.temp }}/anticlaude-report.${EXT}"
+        set -euo pipefail
 
-        ARGS="--endpoint ${{ inputs.endpoint }} --count ${{ inputs.count }} --variants ${{ inputs.variants }} --timeout ${{ inputs.timeout }} --output ${{ inputs.output-format }} --out ${REPORT_PATH} --json-summary"
+        case "${INPUT_OUTPUT_FORMAT}" in
+          markdown) EXT="md" ;;
+          json) EXT="json" ;;
+          html) EXT="html" ;;
+          *)
+            echo "::error::Invalid output-format: ${INPUT_OUTPUT_FORMAT}"
+            exit 1
+            ;;
+        esac
 
-        if [ -n "${{ inputs.auth }}" ]; then
-          ARGS="${ARGS} --auth '${{ inputs.auth }}'"
+        case "${INPUT_ADAPTER}" in
+          generic-json|openai-chat|anthropic-messages|custom-json) ;;
+          *)
+            echo "::error::Invalid adapter: ${INPUT_ADAPTER}"
+            exit 1
+            ;;
+        esac
+
+        REPORT_PATH="${RUNNER_TEMP}/anticlaude-report.${EXT}"
+        OUTPUT_PATH="${RUNNER_TEMP}/anticlaude-output.txt"
+
+        args=(
+          scan
+          --endpoint "${INPUT_ENDPOINT}"
+          --adapter "${INPUT_ADAPTER}"
+          --count "${INPUT_COUNT}"
+          --variants "${INPUT_VARIANTS}"
+          --timeout "${INPUT_TIMEOUT}"
+          --output "${INPUT_OUTPUT_FORMAT}"
+          --out "${REPORT_PATH}"
+          --json-summary
+        )
+
+        if [ "${INPUT_ADAPTER}" = "generic-json" ]; then
+          args+=(--body-field "${INPUT_BODY_FIELD}")
         fi
-        if [ -n "${{ inputs.llm-judge }}" ]; then
-          ARGS="${ARGS} --llm-judge ${{ inputs.llm-judge }}"
+        if [ -n "${INPUT_BODY_TEMPLATE}" ]; then
+          args+=(--body-template "${INPUT_BODY_TEMPLATE}")
+        fi
+        if [ -n "${INPUT_TARGET_MODEL}" ]; then
+          args+=(--target-model "${INPUT_TARGET_MODEL}")
+        fi
+        if [ "${INPUT_ADAPTER}" = "anthropic-messages" ]; then
+          args+=(--max-tokens "${INPUT_MAX_TOKENS}")
+        fi
+        if [ -n "${INPUT_SUITE}" ]; then
+          args+=(--suite "${INPUT_SUITE}")
+        fi
+        if [ -n "${INPUT_AUTH}" ]; then
+          args+=(--auth "${INPUT_AUTH}")
+        fi
+        if [ -n "${INPUT_LLM_JUDGE}" ]; then
+          args+=(--llm-judge "${INPUT_LLM_JUDGE}")
         fi
 
-        node packages/cli/dist/index.js scan ${ARGS} 2>&1 | tee /tmp/anticlaude-output.txt || true
+        set +e
+        node packages/cli/dist/index.js "${args[@]}" 2>&1 | tee "${OUTPUT_PATH}"
+        scan_status=${PIPESTATUS[0]}
+        set -e
 
-        echo "report_path=${REPORT_PATH}" >> $GITHUB_OUTPUT
+        echo "report_path=${REPORT_PATH}" >> "${GITHUB_OUTPUT}"
+        echo "output_path=${OUTPUT_PATH}" >> "${GITHUB_OUTPUT}"
+        echo "scan_exit_code=${scan_status}" >> "${GITHUB_OUTPUT}"
 
     - name: Parse results
       id: parse
       shell: bash
       run: |
-        SUMMARY=$(grep 'ANTICLAUDE_SUMMARY=' /tmp/anticlaude-output.txt | tail -1 | cut -d= -f2-)
+        set -euo pipefail
+        OUTPUT_PATH="${{ steps.scan.outputs.output_path }}"
+        SUMMARY=$(grep 'ANTICLAUDE_SUMMARY=' "${OUTPUT_PATH}" | tail -1 | cut -d= -f2- || true)
         if [ -n "${SUMMARY}" ]; then
           SCORE=$(echo "${SUMMARY}" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).score))")
           BREACHES=$(echo "${SUMMARY}" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).breaches))")
+          ERRORS=$(echo "${SUMMARY}" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).errors || 0))")
         else
           SCORE="0"
           BREACHES="0"
+          ERRORS="1"
         fi
-        echo "score=${SCORE}" >> $GITHUB_OUTPUT
-        echo "breaches=${BREACHES}" >> $GITHUB_OUTPUT
+        echo "score=${SCORE}" >> "${GITHUB_OUTPUT}"
+        echo "breaches=${BREACHES}" >> "${GITHUB_OUTPUT}"
+        echo "errors=${ERRORS}" >> "${GITHUB_OUTPUT}"
+
+    - name: Run compare gates
+      id: compare
+      shell: bash
+      working-directory: ${{ github.action_path }}/..
+      env:
+        INPUT_BASELINE_REPORT: ${{ inputs.baseline-report }}
+        INPUT_OUTPUT_FORMAT: ${{ inputs.output-format }}
+        INPUT_FAIL_ON_SCORE_DROP: ${{ inputs.fail-on-score-drop }}
+        INPUT_FAIL_ON_NEW_SEVERITY: ${{ inputs.fail-on-new-severity }}
+        INPUT_FAIL_ON_NEW_ERROR: ${{ inputs.fail-on-new-error }}
+        INPUT_FAIL_ON_CATEGORY_REGRESSION: ${{ inputs.fail-on-category-regression }}
+        CURRENT_REPORT_PATH: ${{ steps.scan.outputs.report_path }}
+      run: |
+        set -euo pipefail
+
+        COMPARE_PATH="${RUNNER_TEMP}/anticlaude-compare.json"
+        COMPARE_OUTPUT_PATH="${RUNNER_TEMP}/anticlaude-compare-output.txt"
+        echo "compare_path=" >> "${GITHUB_OUTPUT}"
+        echo "compare_output_path=" >> "${GITHUB_OUTPUT}"
+        echo "compare_exit_code=0" >> "${GITHUB_OUTPUT}"
+
+        if [ -z "${INPUT_BASELINE_REPORT}" ]; then
+          exit 0
+        fi
+
+        if [ "${INPUT_OUTPUT_FORMAT}" != "json" ]; then
+          echo "::error::baseline-report requires output-format=json so the current report can be compared"
+          echo "compare_exit_code=1" >> "${GITHUB_OUTPUT}"
+          exit 0
+        fi
+
+        args=(
+          compare
+          "${INPUT_BASELINE_REPORT}"
+          "${CURRENT_REPORT_PATH}"
+          --output
+          json
+          --out
+          "${COMPARE_PATH}"
+        )
+
+        if [ -n "${INPUT_FAIL_ON_SCORE_DROP}" ]; then
+          args+=(--fail-on-score-drop "${INPUT_FAIL_ON_SCORE_DROP}")
+        fi
+        if [ -n "${INPUT_FAIL_ON_NEW_SEVERITY}" ]; then
+          args+=(--fail-on-new-severity "${INPUT_FAIL_ON_NEW_SEVERITY}")
+        fi
+        if [ "${INPUT_FAIL_ON_NEW_ERROR}" = "true" ]; then
+          args+=(--fail-on-new-error)
+        fi
+        if [ "${INPUT_FAIL_ON_CATEGORY_REGRESSION}" = "true" ]; then
+          args+=(--fail-on-category-regression)
+        fi
+
+        set +e
+        node packages/cli/dist/index.js "${args[@]}" 2>&1 | tee "${COMPARE_OUTPUT_PATH}"
+        compare_status=${PIPESTATUS[0]}
+        set -e
+
+        echo "compare_path=${COMPARE_PATH}" >> "${GITHUB_OUTPUT}"
+        echo "compare_output_path=${COMPARE_OUTPUT_PATH}" >> "${GITHUB_OUTPUT}"
+        echo "compare_exit_code=${compare_status}" >> "${GITHUB_OUTPUT}"
 
     - name: Post PR comment
       if: inputs.comment-on-pr == 'true' && github.event_name == 'pull_request'
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPORT_PATH: ${{ steps.scan.outputs.report_path }}
+        COMPARE_PATH: ${{ steps.compare.outputs.compare_path }}
+        COMPARE_EXIT_CODE: ${{ steps.compare.outputs.compare_exit_code }}
+        SCORE: ${{ steps.parse.outputs.score }}
+        BREACHES: ${{ steps.parse.outputs.breaches }}
       run: |
-        SCORE="${{ steps.parse.outputs.score }}"
-        BREACHES="${{ steps.parse.outputs.breaches }}"
+        set -euo pipefail
+        COMMENT_PATH="${RUNNER_TEMP}/anticlaude-pr-comment.md"
 
         if [ "${SCORE}" -ge 80 ]; then ICON="pass"; else ICON="fail"; fi
 
-        BODY="## AntiClaude Security Scan
+        {
+          echo "## AntiClaude Security Scan"
+          echo
+          echo "**Status:** ${ICON} | **Score:** ${SCORE}/100 | **Breaches:** ${BREACHES}"
+          echo
+          echo "<details><summary>Full Report</summary>"
+          echo
+          cat "${REPORT_PATH}" 2>/dev/null || echo 'Report not available'
+          echo
+          echo "</details>"
+          if [ -n "${COMPARE_PATH}" ]; then
+            echo
+            echo "<details><summary>Compare Report</summary>"
+            echo
+            cat "${COMPARE_PATH}" 2>/dev/null || echo 'Compare report not available'
+            echo
+            echo "</details>"
+            if [ "${COMPARE_EXIT_CODE}" != "0" ]; then
+              echo
+              echo "**Compare Gates:** failed"
+            fi
+          fi
+        } > "${COMMENT_PATH}"
 
-        **Score:** ${SCORE}/100 | **Breaches:** ${BREACHES}
+        gh pr comment "${PR_NUMBER}" --body-file "${COMMENT_PATH}"
 
-        <details><summary>Full Report</summary>
-
-        $(cat ${{ steps.scan.outputs.report_path }} 2>/dev/null || echo 'Report not available')
-
-        </details>"
-
-        gh pr comment ${{ github.event.pull_request.number }} --body "${BODY}"
+    - name: Check compare gates
+      shell: bash
+      env:
+        COMPARE_EXIT_CODE: ${{ steps.compare.outputs.compare_exit_code }}
+      run: |
+        set -euo pipefail
+        if ! [[ "${COMPARE_EXIT_CODE}" =~ ^[0-9]+$ ]]; then
+          echo "::error::Invalid compare exit code: ${COMPARE_EXIT_CODE}"
+          exit 1
+        fi
+        if (( COMPARE_EXIT_CODE != 0 )); then
+          echo "::error::AntiClaude compare gates failed"
+          exit 1
+        fi
 
     - name: Check threshold
       shell: bash
+      env:
+        SCORE: ${{ steps.parse.outputs.score }}
+        THRESHOLD: ${{ inputs.fail-threshold }}
       run: |
-        SCORE="${{ steps.parse.outputs.score }}"
-        THRESHOLD="${{ inputs.fail-threshold }}"
-        if [ "${SCORE}" -lt "${THRESHOLD}" ]; then
+        set -euo pipefail
+        if ! [[ "${SCORE}" =~ ^[0-9]+$ ]]; then
+          echo "::error::Invalid AntiClaude score: ${SCORE}"
+          exit 1
+        fi
+        if ! [[ "${THRESHOLD}" =~ ^[0-9]+$ ]]; then
+          echo "::error::Invalid fail-threshold: ${THRESHOLD}"
+          exit 1
+        fi
+        if (( SCORE < THRESHOLD )); then
           echo "::error::AntiClaude score ${SCORE} is below threshold ${THRESHOLD}"
           exit 1
         fi
