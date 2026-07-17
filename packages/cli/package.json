@@ -1,7 +1,7 @@
 {
   "name": "anticlaude",
   "version": "1.1.0",
-  "description": "CLI tool for AI agent security testing, eval labs, and local runtime control",
+  "description": "CLI for AI agent security evals, CI regression gates, and local runtime control",
   "bin": {
     "anticlaude": "./dist/index.js"
   },
@@ -17,7 +17,9 @@
   "bugs": {
     "url": "https://github.com/TacticSpaceTech/AntiClaude/issues"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -33,16 +35,26 @@
     "@types/node": "^22.0.0",
     "typescript": "^5.7.3"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
-    "dist"
+    "dist",
+    "examples",
+    "LICENSE",
+    "README.md"
   ],
   "keywords": [
     "ai",
+    "agent",
     "security",
     "red-team",
     "prompt-injection",
-    "agent",
-    "owasp"
+    "owasp",
+    "ci",
+    "regression",
+    "mcp",
+    "runtime",
+    "cli"
   ]
 }

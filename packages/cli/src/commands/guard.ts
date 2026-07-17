@@ -8,13 +8,14 @@ import {
   startGuardGateway,
 } from '@anticlaude/engine'
 import type { TargetAdapter } from '@anticlaude/engine'
+import { resolvePolicyPath } from '../paths'
 
 const adapters: TargetAdapter[] = ['generic-json', 'openai-chat', 'anthropic-messages', 'custom-json']
 
 export const guardCommand = new Command('guard')
   .description('Start the local-only AntiClaude Guard alpha gateway')
   .requiredOption('--target <url>', 'Target API endpoint URL to forward allowed requests to')
-  .option('--config <file>', 'Guard policy JSON/YAML file')
+  .option('--config <file>', 'Guard policy JSON/YAML path or built-in name (default, builtin:default)')
   .option('--port <port>', 'Local port to bind. Use 0 for a random local port.', '0')
   .option('--adapter <type>', 'Target request adapter: generic-json, openai-chat, anthropic-messages, custom-json', 'generic-json')
   .option('--body-field <name>', 'JSON field used by the generic-json adapter', 'message')
@@ -34,7 +35,7 @@ export const guardCommand = new Command('guard')
     const maxTokens = adapter === 'anthropic-messages'
       ? parsePositiveInt(opts.maxTokens, 'max-tokens')
       : undefined
-    const policy = opts.config ? loadGuardPolicy(opts.config) : DEFAULT_GUARD_POLICY
+    const policy = opts.config ? loadGuardPolicy(resolvePolicyPath(opts.config)) : DEFAULT_GUARD_POLICY
     const runtimeProfile = opts.runtimeProfile
       ? loadRuntimePolicyProfile(opts.runtimeProfile)
       : opts.reviewStore

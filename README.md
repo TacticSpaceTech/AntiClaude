@@ -1,114 +1,156 @@
 # AntiClaude
 
-**Local-first eval, runtime control, and audit replay for AI agents.**
+**CI-friendly security evals for AI agents** — deterministic red-team suites, regression gates, and local-only runtime control with audit replay.
 
 [![CI](https://github.com/TacticSpaceTech/AntiClaude/actions/workflows/ci.yml/badge.svg)](https://github.com/TacticSpaceTech/AntiClaude/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/anticlaude)](https://www.npmjs.com/package/anticlaude)
 [![npm](https://img.shields.io/npm/v/@anticlaude/engine)](https://www.npmjs.com/package/@anticlaude/engine)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
-Open-source security toolkit for AI agents. Run deterministic red-team evals, compare regressions, inspect evidence, test local runtime guard and tool-review policies, and replay audit traces from your terminal, CI pipeline, or local web UI.
+Open-source, local-first toolkit for agent builders. Run the same engine from the terminal, CI (GitHub Action), or a local web UI: attack → versioned report → compare against a baseline → optional local guard/review → JSONL replay.
 
-<!-- TODO: Add demo GIF here -->
+## Why AntiClaude
 
-## Quick Start
+| Need | What you get |
+| --- | --- |
+| Prove the agent broke | Real HTTP attacks + evidence, not static “looks risky” only |
+| Stop regressions in CI | `scan --suite` + `compare` gates (severity / category / score) |
+| Try policy before production | Local guard gateway + tool allow/block/review (beta) |
+| npm / Node workflow | `npx anticlaude` — no Python stack required |
 
-### CLI
+## Quick start (5 minutes)
+
+Requires Node.js 18+ (22 recommended).
 
 ```bash
-npx anticlaude scan --endpoint https://your-agent.com/api/chat
+# Terminal 1 — deterministic vulnerable fixture
+npx anticlaude@1.1.0 fixtures --kind vulnerable-generic --port 4100
+
+# Terminal 2 — built-in smoke suite (no monorepo paths required)
+npx anticlaude@1.1.0 scan \
+  --endpoint http://127.0.0.1:4100/chat \
+  --suite smoke \
+  --adapter generic-json \
+  --output json \
+  --out current.json
+
+# Optional: compare against a baseline report (clone repo for examples)
+npx anticlaude@1.1.0 compare \
+  docs/examples/reports/baseline-safe.json \
+  current.json \
+  --fail-on-new-severity critical,high \
+  --fail-on-category-regression
 ```
 
-Options:
+Against your own agent:
+
+```bash
+npx anticlaude@1.1.0 scan \
+  --endpoint https://your-agent.example/api/chat \
+  --adapter generic-json \
+  --body-field message \
+  --suite smoke \
+  --output markdown \
+  --out report.md
+```
+
+Only scan endpoints you are authorized to test. See [SECURITY.md](SECURITY.md).
+
+### Scan options
 
 ```
---auth <header>       Authorization header (e.g. "Bearer sk-...")
---adapter <type>      Target adapter: generic-json | openai-chat | anthropic-messages | custom-json
---body-field <name>   JSON field for generic-json requests (default: message)
+--auth <header>        Authorization header (e.g. "Bearer sk-...")
+--adapter <type>       generic-json | openai-chat | anthropic-messages | custom-json
+--body-field <name>    JSON field for generic-json (default: message)
 --body-template <json> Custom JSON template using {{prompt}} or {{promptJson}}
 --target-model <model> Model field for provider-compatible adapters
---suite <file>        Deterministic eval suite JSON
---count <n>           Number of payloads to test (default: 12)
---variants <n>        Max variant attempts per payload (default: 2)
---timeout <ms>        Request timeout in ms (default: 15000)
---output <format>     Report format: json | markdown | html (default: markdown)
---out <file>          Write report to file
---fail-threshold <n>  Exit 1 if score is below threshold
---llm-judge <provider>  Enable LLM judge: openai or anthropic
---llm-key <key>       API key for LLM judge
---json-summary        Output machine-readable summary for CI
+--suite <file|name>    Suite JSON path or built-in name (smoke)
+--count <n>            Number of payloads (default: 12; ignored when suite sets count)
+--variants <n>         Max variant attempts per payload (default: 2)
+--timeout <ms>         Request timeout (default: 15000)
+--output <format>      json | markdown | html (default: markdown)
+--out <file>           Write report to file
+--fail-threshold <n>   Exit 1 if score is below threshold
+--llm-judge <provider> openai or anthropic
+--llm-key <key>        API key for LLM judge
+--json-summary         Machine-readable summary line for CI
 ```
 
-### Eval Lab
+## Eval lab (from a clone)
 
 ```bash
-node packages/cli/dist/index.js fixtures --kind vulnerable-generic --port 4100
+pnpm install
+pnpm run build:packages
 
-npx anticlaude scan \
+pnpm exec anticlaude fixtures --kind vulnerable-generic --port 4100
+
+pnpm exec anticlaude scan \
   --endpoint http://127.0.0.1:4100/chat \
   --suite docs/examples/suites/phase2-smoke-suite.json \
   --adapter generic-json \
   --output json \
   --out current.json
 
-npx anticlaude compare docs/examples/reports/baseline-safe.json current.json \
+pnpm exec anticlaude compare \
+  docs/examples/reports/baseline-safe.json \
+  current.json \
   --fail-on-new-severity critical,high \
   --fail-on-category-regression
 ```
 
-### Guard Alpha And Replay
+## Guard and runtime control (local beta)
 
 ```bash
-npx anticlaude guard \
-  --config docs/examples/policies/anticlaude.policy.yaml \
+# Built-in default policy, or path / "default"
+npx anticlaude@1.1.0 guard \
+  --config default \
   --target http://127.0.0.1:4100/chat \
   --trace traces/anticlaude-guard.jsonl
 
-npx anticlaude replay docs/examples/traces/sample-trace.jsonl
+npx anticlaude@1.1.0 replay docs/examples/traces/sample-trace.jsonl
 ```
 
-`guard` is a local-only alpha gateway for policy testing. It is not a hosted service or production runtime firewall.
-
-### Runtime Control Beta
+Support-agent style tool governance + review queue:
 
 ```bash
-node packages/cli/dist/index.js fixtures --kind support-agent --port 4100
+pnpm exec anticlaude fixtures --kind support-agent --port 4100
 
-node packages/cli/dist/index.js guard \
+pnpm exec anticlaude guard \
   --target http://127.0.0.1:4100/chat \
   --review-store /tmp/anticlaude-reviews.jsonl \
   --trace /tmp/anticlaude-runtime.jsonl
 
-node packages/cli/dist/index.js review list --store /tmp/anticlaude-reviews.jsonl
+pnpm exec anticlaude review list --store /tmp/anticlaude-reviews.jsonl
 ```
 
-Runtime control beta adds a deterministic support-agent fixture, per-agent tool policy, local review queue, and incident trace index. It stays local and example-driven; it does not ship hosted approvals or production enforcement.
+`guard` / `review` are **local-only beta** for policy testing. They are not a hosted service or production runtime firewall.
 
-### Skill Audit
+## Other commands
 
 ```bash
-npx anticlaude audit --skill path/to/skill.yaml
+npx anticlaude@1.1.0 audit --skill path/to/skill.yaml   # skill/tool static audit
+npx anticlaude@1.1.0 mcp-scan                           # discover + audit MCP configs
+npx anticlaude@1.1.0 badge --score 85                   # shields.io badge URL helper
 ```
 
-Static analysis of AI agent skill/tool definitions for description poisoning, parameter injection, permission scope issues, and more.
+## GitHub Action
 
-### MCP Server Scan
-
-```bash
-npx anticlaude mcp-scan
+```yaml
+- uses: TacticSpaceTech/AntiClaude/action@v1
+  with:
+    endpoint: ${{ secrets.AGENT_ENDPOINT }}
+    auth: 'Bearer ${{ secrets.AGENT_TOKEN }}'
+    output-format: json
+    suite: docs/examples/suites/phase2-smoke-suite.json
+    baseline-report: docs/examples/reports/baseline-safe.json
+    fail-on-new-severity: critical,high
+    fail-on-category-regression: true
+    fail-threshold: 70
 ```
 
-Auto-discovers MCP server configs (`~/.cursor/mcp.json`, `~/.claude/claude_desktop_config.json`) and audits for credential exposure, command injection, dependency integrity, and more.
+See [action/README.md](action/README.md).
 
-### Security Badge
-
-```bash
-npx anticlaude badge --score 85
-```
-
-Generate a shields.io badge for your README after scanning.
-
-### Web UI
+## Web UI
 
 ```bash
 git clone https://github.com/TacticSpaceTech/AntiClaude.git
@@ -118,11 +160,12 @@ pnpm run build:payloads
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) for the interactive scanner with real-time attack visualization.
-Open [http://localhost:3000/control-plane](http://localhost:3000/control-plane) for local example agent inventory, tool policy, review queue, incident replay, report, comparison, and policy decision inspection.
-Web scans use the same engine semantics as the CLI and do not generate simulated vulnerability findings.
+- [http://localhost:3000](http://localhost:3000) — interactive scanner  
+- [http://localhost:3000/control-plane](http://localhost:3000/control-plane) — local control-plane console  
 
-## What It Tests
+Web scans use the same engine as the CLI and do not invent simulated findings. Private/reserved target URLs are rejected (fail-closed).
+
+## What it tests
 
 | ID | Category | Payloads |
 |----|----------|----------|
@@ -134,19 +177,19 @@ Web scans use the same engine semantics as the CLI and do not generate simulated
 | ASI07 | System Prompt Leakage | 8 |
 | ASI08 | Human-Agent Trust Manipulation | 8 |
 
-64 YAML-based attack payloads covering 7/10 OWASP Agentic Top 10 categories, with 8 adaptive strategies: direct, encoding, roleplay, multilingual, nested, semantic, continuation, and fragmented.
+64 YAML payloads covering 7/10 OWASP Agentic Top 10 categories, with adaptive variant strategies (encoding, roleplay, multilingual, nested, semantic, and more).
 
-## Project Structure
+## Project structure
 
 ```
 AntiClaude/
 ├── packages/
-│   ├── engine/          @anticlaude/engine — core scanning engine
-│   └── cli/             anticlaude — CLI tool
+│   ├── engine/          @anticlaude/engine — core library
+│   └── cli/             anticlaude — CLI (+ examples/ for built-ins)
 ├── app/                 Next.js web UI
-├── docs/examples/       Deterministic suites, reports, policies, and traces
-├── components/          React components
-└── lib/                 Shared utilities
+├── docs/examples/       Suites, reports, policies, traces
+├── action/              GitHub Action
+└── payloads/            YAML attack definitions
 ```
 
 ## Development
@@ -155,17 +198,17 @@ Requires Node.js 18+ (22 recommended; see `.nvmrc`) and **pnpm**.
 
 ```bash
 pnpm install
-pnpm run build:payloads    # Compile YAML payloads → JSON
-pnpm run build:engine      # Build the engine package
-pnpm run build:cli         # Build the CLI package
-pnpm run test              # Run all tests
-pnpm run ci                # Full package verification path
-pnpm dev                   # Start Next.js dev server
+pnpm run build:payloads
+pnpm run build:packages
+pnpm run test
+pnpm run ci              # validate + build packages + test + pack-check
+pnpm run release:check   # build packages + npm pack hygiene
+pnpm dev
 ```
 
-See [MAINTENANCE.md](MAINTENANCE.md) for release and long-pause recovery checklists.
+See [MAINTENANCE.md](MAINTENANCE.md) for the release checklist.
 
-## Using the Engine as a Library
+## Using the engine as a library
 
 ```bash
 npm install @anticlaude/engine
@@ -175,7 +218,7 @@ npm install @anticlaude/engine
 import { DEFAULT_GUARD_POLICY, evaluateGuardPolicy, runScan } from '@anticlaude/engine'
 
 const report = await runScan({
-  endpoint: 'https://your-agent.com/api/chat',
+  endpoint: 'https://your-agent.example/api/chat',
   target: {
     adapter: 'generic-json',
     bodyField: 'message',
@@ -194,8 +237,6 @@ const decision = evaluateGuardPolicy(DEFAULT_GUARD_POLICY, {
 console.log(decision.action)
 ```
 
-Runtime policy:
-
 ```typescript
 import { DEFAULT_RUNTIME_POLICY_PROFILE, evaluateRuntimeToolRequest } from '@anticlaude/engine'
 
@@ -210,34 +251,32 @@ const runtimeDecision = evaluateRuntimeToolRequest(DEFAULT_RUNTIME_POLICY_PROFIL
 console.log(runtimeDecision.action)
 ```
 
-## Current Scope
+## Shipped in 1.1.0
 
-Shipped locally in this repo:
-
-- Eval scanner with deterministic suites and local mock fixtures
-- Baseline report comparison and regression gates
+- Eval scanner with deterministic suites, built-in `smoke` suite, and local fixtures
+- Baseline report comparison and CI regression gates
 - Versioned report schema with committed examples
 - Skill and MCP configuration audit
 - GitHub Action integration
-- Local Guard SDK and local-only guard gateway alpha
-- Runtime Control Beta for local support-agent tool policy, review queue, and incident indexing
-- JSONL audit trace writer and CLI/Web replay
+- Local Guard SDK / gateway alpha and built-in `default` policy
+- Runtime control beta (tool policy, review queue, incident index)
+- JSONL audit traces and CLI/Web replay
+- Local `/control-plane` console for example artifacts
 
-Not shipped:
+## Not shipped
 
-- Hosted SaaS dashboard
-- Multi-user team workspace
+- Hosted SaaS dashboard or multi-user cloud workspace
 - Billing
-- Production runtime firewall
-- SOC 2/GDPR compliance readiness
+- Production runtime firewall / mesh
+- SOC 2 / GDPR compliance product claims
 - Public payload marketplace
 
 ## Contributing
 
-1. Fork the repo
-2. Add payloads in `payloads/` following existing YAML format
-3. Run `pnpm run build:payloads && pnpm run test`
-4. Submit a PR
+1. Fork the repo  
+2. Add payloads under `payloads/` (see [CONTRIBUTING.md](CONTRIBUTING.md))  
+3. Run `pnpm run build:payloads && pnpm run test`  
+4. Open a PR  
 
 ## License
 

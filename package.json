@@ -20,7 +20,8 @@
     "test": "pnpm run test:action && pnpm -r run test",
     "test:action": "node scripts/test-action-yml.mjs",
     "validate:payloads": "node scripts/validate-payloads.mjs",
-    "ci": "pnpm run validate:payloads && pnpm run build:packages && pnpm run test"
+    "release:check": "pnpm run build:packages && node scripts/pack-check.mjs",
+    "ci": "pnpm run validate:payloads && pnpm run build:packages && pnpm run test && node scripts/pack-check.mjs"
   },
   "dependencies": {
     "@anticlaude/engine": "workspace:*",

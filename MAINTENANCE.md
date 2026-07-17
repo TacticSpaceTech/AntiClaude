@@ -20,17 +20,17 @@ Do not reintroduce root `package-lock.json`. Use `pnpm install` / `pnpm-lock.yam
 ```bash
 pnpm install
 pnpm run ci
+pnpm run build          # Next.js production build — required before tag
 ```
 
 `pnpm run ci` runs:
 
 1. Payload schema validation
-2. Payload build
-3. Engine + CLI typecheck/build
-4. Full test suite (Action YAML safety + engine vitest)
-5. Next.js production build (when time allows for release; always run before tag)
+2. Payload build (engine + CLI)
+3. Full test suite (Action YAML safety + engine vitest)
+4. Pack hygiene (`scripts/pack-check.mjs` — no test files in tarball, workspace deps rewritten, examples present)
 
-For a faster loop while editing engine/CLI only:
+Faster loop while editing engine/CLI only:
 
 ```bash
 pnpm run validate:payloads
@@ -39,23 +39,35 @@ pnpm run typecheck
 pnpm run test
 ```
 
+Publish-shaped check without full monorepo `ci`:
+
+```bash
+pnpm run release:check
+```
+
 ## Versioning
 
 - Packages `anticlaude` and `@anticlaude/engine` share the same semver for public releases.
 - Bump both `packages/*/package.json` versions together.
 - CLI `--version` reads `packages/cli/package.json` at runtime.
 - Update `CHANGELOG.md` under `[Unreleased]` as you work; move entries into a version section on release.
-- Tag format: `vX.Y.Z` (triggers npm publish workflow).
+- Tag format: `vX.Y.Z` (triggers npm publish workflow with provenance).
 
 ## Release checklist
 
 1. Working tree clean; `main` green on CI
-2. `CHANGELOG.md` has a dated section for the release
-3. Versions bumped in `packages/engine` and `packages/cli`
-4. `pnpm run ci` passes locally
-5. Push commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`
-6. Confirm GitHub Actions **Publish to npm** succeeds
-7. Smoke: `npx anticlaude@X.Y.Z --help` and a fixtures-based scan
+2. `CHANGELOG.md` has a dated section for the release (no “not yet published” notes)
+3. Versions bumped in `packages/engine` and `packages/cli` (and root monorepo version if tracking)
+4. `pnpm run ci` and `pnpm run build` pass locally
+5. `pnpm run release:check` passes (tarball hygiene)
+6. Push `main`, wait for CI green
+7. `git tag vX.Y.Z && git push origin vX.Y.Z`
+8. Confirm GitHub Actions **Publish to npm** succeeds for both packages
+9. Smoke: `npm view anticlaude version`, `npx anticlaude@X.Y.Z --help`, fixtures + `scan --suite smoke`
+
+### 1.1.0 note
+
+Tag **`v1.1.0`** after the local control-plane commits are on `origin/main`. If npm provenance fails on the org token setup, re-run publish without `--provenance` only as a fallback and fix OIDC/`id-token` afterward.
 
 ## Security boundaries (do not regress)
 

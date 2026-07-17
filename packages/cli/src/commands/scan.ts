@@ -4,6 +4,7 @@ import ora from 'ora'
 import * as fs from 'fs'
 import { loadEvalSuite, runScan, reportToJson, reportToMarkdown, reportToHtml } from '@anticlaude/engine'
 import { generateBadgeUrl } from './badge'
+import { resolveSuitePath } from '../paths'
 import type { ScanProgress, ScanReport, LlmJudgeConfig, LlmJudgeProvider, TargetAdapter } from '@anticlaude/engine'
 
 function parseIntOption(value: string, name: string): number {
@@ -49,7 +50,7 @@ export const scanCommand = new Command('scan')
   .option('--body-template <json>', 'Custom JSON request template. Use {{prompt}} inside a JSON string or {{promptJson}} as a JSON value.')
   .option('--target-model <model>', 'Model field for OpenAI-compatible or Anthropic-compatible adapters')
   .option('--max-tokens <number>', 'max_tokens for Anthropic-compatible requests', '1024')
-  .option('--suite <file>', 'Eval suite JSON file with deterministic payload selection')
+  .option('--suite <file>', 'Eval suite JSON path or built-in name (smoke, builtin:smoke)')
   .option('--count <number>', 'Number of payloads to test', '12')
   .option('--variants <number>', 'Max variants per payload', '2')
   .option('--timeout <ms>', 'Request timeout in ms', '15000')
@@ -149,7 +150,7 @@ export const scanCommand = new Command('scan')
       }
 
       const adapter = parseAdapter(opts.adapter)
-      const suite = opts.suite ? loadEvalSuite(opts.suite) : undefined
+      const suite = opts.suite ? loadEvalSuite(resolveSuitePath(opts.suite)) : undefined
       const report = await runScan({
         endpoint: opts.endpoint,
         target: {

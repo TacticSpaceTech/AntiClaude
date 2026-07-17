@@ -7,32 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [1.1.0] - 2026-07-18
 
-- Relicensed the repository to **AGPL-3.0-only** (aligned with npm package metadata).
-
-### Maintenance
-
-- Removed stale root `package-lock.json` (pnpm is the only package manager).
-- Added maintenance scripts (`typecheck`, `ci`), Node engines, `.nvmrc`, and expanded `.gitignore`.
-- CI now builds packages and runs the full monorepo verification path.
-
-## [1.1.0] - 2026-05-09
-
-Local-first control plane release (Phase 1–3). Not yet published to npm until this tree is tagged.
+Local-first control plane release (Phase 1–3): deterministic evals, CI compare gates, local guard/runtime review, and audit replay.
 
 ### Added
 
 #### Eval Lab
 
 - Deterministic eval suites (`scan --suite`) with seedable payload selection
+- Built-in CLI suite name: `smoke` (also `builtin:smoke`)
 - Local mock fixtures (`anticlaude fixtures`) for generic, OpenAI, Anthropic, tool-call, and support-agent targets
 - Report comparison and regression gates (`anticlaude compare`)
-- Versioned scan report schema (`reportVersion`) with committed examples
+- Versioned scan report schema (`reportVersion`) with committed examples under `docs/examples/`
 
 #### Runtime control (local beta)
 
 - Guard policy SDK and local-only HTTP gateway (`anticlaude guard`)
+- Built-in CLI policy name: `default` (also `builtin:default`)
 - Runtime tool governance policy v2 (allow / block / review)
 - Human review queue CLI (`anticlaude review list|show|approve|deny`)
 - Local incident index and JSONL audit traces
@@ -49,8 +41,21 @@ Local-first control plane release (Phase 1–3). Not yet published to npm until 
 
 #### Tests & docs
 
-- Expanded engine vitest suite (110 tests)
-- Phase 1–3 goal/progress docs and example artifacts under `docs/examples/`
+- Expanded engine vitest suite
+- Phase 1–3 goal/progress docs and example artifacts
+- `SECURITY.md`, release pack hygiene (`pnpm run release:check`)
+
+### Changed
+
+- Relicensed the repository to **AGPL-3.0-only** (aligned with npm package metadata)
+- npm packages include LICENSE, engine `exports` map, and CLI `examples/` for first-run paths
+- Publish workflow uses npm provenance (`--provenance`)
+
+### Maintenance
+
+- Removed stale root `package-lock.json` (pnpm is the only package manager)
+- Added maintenance scripts (`typecheck`, `ci`, `release:check`), Node engines, `.nvmrc`, and expanded `.gitignore`
+- CI builds packages, runs tests, and validates pack contents before merge
 
 ### Security
 

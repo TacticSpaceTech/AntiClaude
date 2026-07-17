@@ -1,0 +1,98 @@
+name: AntiClaude Local Guard Alpha
+version: "1"
+description: Local-only alpha policy for prompt, tool-call, and output risk.
+defaultAction: allow
+rules:
+  - id: prompt.injection.block
+    surface: prompt
+    action: block
+    severity: critical
+    reason: Prompt attempts to override or extract system/developer instructions.
+    recommendedAction: Reject the request and keep system/developer instructions private.
+    match:
+      contains:
+        - ignore previous instructions
+        - system prompt
+        - developer mode
+        - reveal your instructions
+        - initial directives
+
+  - id: prompt.private-data.block
+    surface: prompt
+    action: block
+    severity: high
+    reason: Prompt requests private data or credential exfiltration.
+    recommendedAction: Reject unless the caller has explicit, verified authorization.
+    match:
+      contains:
+        - stored payment methods
+        - credit card
+        - api key
+        - session token
+        - billing history
+        - last login ip
+        - export customer data
+
+  - id: prompt.ambiguous-action.review
+    surface: prompt
+    action: review
+    severity: medium
+    reason: Prompt requests action that may affect another user or external system.
+    recommendedAction: Route to human review and require explicit authorization.
+    match:
+      contains:
+        - on behalf of another user
+        - without asking
+        - if possible, go ahead
+        - send it externally
+
+  - id: tool.safe-read.allow
+    surface: tool-call
+    action: allow
+    severity: low
+    reason: Tool call matches an allowed read-only tool pattern.
+    recommendedAction: Allow the call and keep audit logging enabled.
+    match:
+      toolNames:
+        - lookup_*
+        - read_*
+        - get_*
+        - list_*
+
+  - id: tool.unsafe-write.block
+    surface: tool-call
+    action: block
+    severity: high
+    reason: Tool call can mutate state, export data, or contact an external destination.
+    recommendedAction: Block unless a narrow allow rule and authorization check exist.
+    match:
+      toolNames:
+        - refund_*
+        - delete_*
+        - write_*
+        - export_*
+        - send_*
+
+  - id: tool.external-destination.review
+    surface: tool-call
+    action: review
+    severity: medium
+    reason: Tool call contains an external destination argument.
+    recommendedAction: Require review before sending data outside the current trust boundary.
+    match:
+      arguments:
+        - path: destination
+          operator: regex
+          value: ^[^@\s]+@[^@\s]+\.[^@\s]+$
+
+  - id: output.sensitive-data.block
+    surface: output
+    action: block
+    severity: high
+    reason: Output appears to contain secrets or private data.
+    recommendedAction: Suppress the output and inspect the upstream tool or retrieval source.
+    match:
+      regex:
+        - \bsk-[A-Za-z0-9_-]{8,}\b
+        - \b(?:\d[ -]*?){13,16}\b
+        - \b\d{3}-\d{2}-\d{4}\b

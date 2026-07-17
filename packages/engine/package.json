@@ -1,9 +1,16 @@
 {
   "name": "@anticlaude/engine",
   "version": "1.1.0",
-  "description": "AntiClaude core security scanning engine",
+  "description": "AntiClaude core engine: agent red-team evals, report compare, local guard, and runtime policy",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "license": "AGPL-3.0-only",
   "author": "AntiClaude",
   "repository": {
@@ -21,6 +28,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "sideEffects": false,
   "scripts": {
     "build": "tsc && cp src/payloads.json dist/payloads.json",
     "dev": "tsc --watch",
@@ -37,6 +45,19 @@
     "vitest": "^3.2.4"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "security",
+    "red-team",
+    "prompt-injection",
+    "owasp",
+    "eval",
+    "llm-security",
+    "mcp"
   ]
 }

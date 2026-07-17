@@ -1,5 +1,5 @@
 name: 'AntiClaude Security Scan'
-description: 'Red-team your AI agent endpoint for prompt injection and OWASP Agentic Top 10 vulnerabilities'
+description: 'Red-team AI agents with deterministic suites and optional baseline compare gates for CI regression'
 branding:
   icon: 'shield'
   color: 'green'

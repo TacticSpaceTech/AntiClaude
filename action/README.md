@@ -1,6 +1,6 @@
 # AntiClaude GitHub Action
 
-Red-team your AI agent endpoint in CI/CD.
+Red-team your AI agent endpoint in CI/CD. Supports deterministic eval suites and baseline report comparison gates so agent security regressions fail the job.
 
 ## Usage
 
